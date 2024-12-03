@@ -6,16 +6,26 @@ const Joi = require("joi");
 
 
 // Importing Models
-const Admin = require("./models/Admin");
+const { Admin } = require("./models/Admin");
 const { Staff } = require("./models/Staff");
+const { Guest } = require("./models/Guest");
 const { Role } = require("./models/Role");
+const { Roomtype } = require("./models/Roomtype");
+const { Laundry } = require("./models/Laundry");
+const { Floor } = require("./models/Floor");
+const { Room } = require("./models/Room");
+const { Food } = require("./models/Food");
 
 // Importing Controllers
 const adminController = require("./controllers/adminController");
 const staffController = require("./controllers/staffController");
+const guestController = require("./controllers/guestController");
 const roleController = require("./controllers/roleController");
 const laundryController = require("./controllers/laundryController");
+const roomtypeController = require("./controllers/roomtypeController");
+const floorController = require("./controllers/floorController");
 const roomController = require("./controllers/roomController");
+const foodController = require("./controllers/foodController");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -66,6 +76,25 @@ app.delete("/api/staff/delete/:id", staffController.deleteStaff);
 
 
 
+// **********************************************************GUEST CRUD**********************************************************
+
+// **1. CREATE - Add Guest**
+app.post("/api/guest/create", guestController.createGuest);
+
+// **2. READ - Get All Guests**
+app.get("/api/guest/", guestController.readallGuest);
+
+// **3. READ - Get Guest by ID**
+app.get("/api/guest/:id", guestController.readGuest);
+
+// **4. UPDATE - Update Guest by ID**
+app.put("/api/guest/update/:id", guestController.updateGuest);
+
+// **5. DELETE - Delete Guest by ID**
+app.delete("/api/guest/delete/:id", guestController.deleteGuest);
+
+
+
 // **********************************************************ROLE CRUD**********************************************************
 
 // **1. CREATE - Add Role**
@@ -104,6 +133,44 @@ app.delete("/api/laundry/delete/:id", laundryController.deleteLaundry);
 
 
 
+// **********************************************************ROOM TYPE CRUD**********************************************************
+
+// **1. CREATE - Add Roomtype**
+app.post("/api/roomtype/create", roomtypeController.createRoomtype);
+
+// **2. READ - Get All Roomtypes**
+app.get("/api/roomtype/", roomtypeController.readallRoomtype);
+
+// **3. READ - Get Roomtype by ID**
+app.get("/api/roomtype/:id", roomtypeController.readRoomtype);
+
+// **4. UPDATE - Update Roomtype by ID**
+app.put("/api/roomtype/update/:id", roomtypeController.updateRoomtype);
+
+// **5. DELETE - Delete Roomtype by ID**
+app.delete("/api/roomtype/delete/:id", roomtypeController.deleteRoomtype);
+
+
+
+// **********************************************************FLOOR CRUD**********************************************************
+
+// **1. CREATE - Add Floor**
+app.post("/api/floor/create", floorController.createFloor);
+
+// **2. READ - Get All Floors**
+app.get("/api/floor/", floorController.readallFloor);
+
+// **3. READ - Get Floor by ID**
+app.get("/api/floor/:id", floorController.readFloor);
+
+// **4. UPDATE - Update Floor by ID**
+app.put("/api/floor/update/:id", floorController.updateFloor);
+
+// **5. DELETE - Delete Floor by ID**
+app.delete("/api/floor/delete/:id", floorController.deleteFloor);
+
+
+
 // **********************************************************ROOM CRUD**********************************************************
 
 // **1. CREATE - Add Room**
@@ -120,6 +187,25 @@ app.put("/api/room/update/:id", roomController.updateRoom);
 
 // **5. DELETE - Delete Room by ID**
 app.delete("/api/room/delete/:id", roomController.deleteRoom);
+
+
+
+// **********************************************************FOOD CRUD**********************************************************
+
+// **1. CREATE - Add Food**
+app.post("/api/food/create", foodController.createFood);
+
+// **2. READ - Get All Foods**
+app.get("/api/food/", foodController.readallFood);
+
+// **3. READ - Get Food by ID**
+app.get("/api/food/:id", foodController.readFood);
+
+// **4. UPDATE - Update Food by ID**
+app.put("/api/food/update/:id", foodController.updateFood);
+
+// **5. DELETE - Delete Food by ID**
+app.delete("/api/food/delete/:id", foodController.deleteFood);
 
 
 // Start Server
