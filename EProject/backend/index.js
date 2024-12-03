@@ -14,6 +14,8 @@ const { Role } = require("./models/Role");
 const adminController = require("./controllers/adminController");
 const staffController = require("./controllers/staffController");
 const roleController = require("./controllers/roleController");
+const laundryController = require("./controllers/laundryController");
+const roomController = require("./controllers/roomController");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -80,6 +82,45 @@ app.put("/api/role/update/:id", roleController.updateRole);
 
 // **5. DELETE - Delete Role by ID**
 app.delete("/api/role/delete/:id", roleController.deleteRole);
+
+
+
+// **********************************************************LAUNDRY CRUD**********************************************************
+
+// **1. CREATE - Add laundry**
+app.post("/api/laundry/create", laundryController.createLaundry);
+
+// **2. READ - Get All Laundrys**
+app.get("/api/laundry/", laundryController.readallLaundry);
+
+// **3. READ - Get Laundry by ID**
+app.get("/api/laundry/:id", laundryController.readLaundry);
+
+// **4. UPDATE - Update Laundry by ID**
+app.put("/api/laundry/update/:id", laundryController.updateLaundry);
+
+// **5. DELETE - Delete Laundry by ID**
+app.delete("/api/laundry/delete/:id", laundryController.deleteLaundry);
+
+
+
+// **********************************************************ROOM CRUD**********************************************************
+
+// **1. CREATE - Add Room**
+app.post("/api/room/create", roomController.createRoom);
+
+// **2. READ - Get All Rooms**
+app.get("/api/room/", roomController.readallRoom);
+
+// **3. READ - Get Room by ID**
+app.get("/api/room/:id", roomController.readRoom);
+
+// **4. UPDATE - Update Room by ID**
+app.put("/api/room/update/:id", roomController.updateRoom);
+
+// **5. DELETE - Delete Room by ID**
+app.delete("/api/room/delete/:id", roomController.deleteRoom);
+
 
 // Start Server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

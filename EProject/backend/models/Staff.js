@@ -1,5 +1,6 @@
 const axios = require("axios");
 const mongoose = require("mongoose");
+const bcrypt = require("bcryptjs"); // Import bcrypt if not already imported
 
 const staffSchema = new mongoose.Schema({
     username: {
@@ -27,21 +28,21 @@ const staffSchema = new mongoose.Schema({
         required: true,
     },
     role: {
-        type: String,
+        type: mongoose.Schema.Types.ObjectId, // Storing role as an ObjectId for consistency
         required: true,
         validate: {
             validator: async function (value) {
                 try {
                     // Fetch the list of valid roles from the API
                     const response = await axios.get("http://localhost:5000/api/role/");
-                    const validRoles = response.data; // Assume the API returns an array of roles
-                    return validRoles.includes(value);
+                    const validRoles = response.data.map(role => role._id); // Extract role IDs
+                    return validRoles.includes(value.toString()); // Ensure the role ID exists
                 } catch (err) {
                     console.error("Error fetching roles:", err);
-                    return false; // If the API fails, validation should fail
+                    return false; // Validation fails if the API fails
                 }
             },
-            message: (props) => `${props.value} is not a valid role.`,
+            message: (props) => `${props.value} is not a valid role ID.`,
         },
     },
 });

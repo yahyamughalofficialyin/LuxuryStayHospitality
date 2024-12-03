@@ -10,6 +10,10 @@ const roleSchema = new mongoose.Schema({
         enum: ["active", "inactive"],
         required: true,
     },
+    limit: {
+        type: Number,
+        required: true,
+    },
 });
 
 module.exports = mongoose.model("Role", roleSchema);

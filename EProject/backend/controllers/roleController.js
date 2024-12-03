@@ -5,6 +5,7 @@ const validateRole = (data) => {
     const schema = Joi.object({
         name: Joi.string().min(3).required(),
         status: Joi.string().valid("active", "inactive").required(),
+        limit: Joi.number().required(),
     });
     return schema.validate(data);
 };
@@ -15,7 +16,7 @@ createRole = async (req, res) => {
         const { error } = validateRole(req.body);
         if (error) return res.status(400).json({ message: error.details[0].message });
     
-        const { name, status } = req.body;
+        const { name, status, limit } = req.body;
     
         // Check if a Role already exists based on name, phone, or cnic
         const existingRole = await Role.findOne({
@@ -27,7 +28,7 @@ createRole = async (req, res) => {
         }
     
         // Create new Role if no existing Role matches
-        const newRole = new Role({ name, status });
+        const newRole = new Role({ name, status, limit });
         await newRole.save();
     
         res.status(201).json({ message: "Role created successfully!" });
