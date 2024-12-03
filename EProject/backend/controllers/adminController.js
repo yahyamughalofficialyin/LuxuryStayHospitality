@@ -3,7 +3,7 @@ const Joi = require("joi");
 
 const validateAdmin = (data) => {
     const schema = Joi.object({
-        username: Joi.string().required(),
+        username: Joi.string().min(3).required(),
         email: Joi.string().email().required(),
         phone: Joi.string().pattern(new RegExp("^[0-9]{10}$")).required(),
         password: Joi.string().min(6).required(),

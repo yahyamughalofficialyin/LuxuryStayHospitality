@@ -1,5 +1,5 @@
+const axios = require("axios");
 const mongoose = require("mongoose");
-const bcrypt = require("bcrypt");
 
 const staffSchema = new mongoose.Schema({
     username: {
@@ -28,8 +28,21 @@ const staffSchema = new mongoose.Schema({
     },
     role: {
         type: String,
-        enum: ["manager", "receptionist", "housekeeping"],
         required: true,
+        validate: {
+            validator: async function (value) {
+                try {
+                    // Fetch the list of valid roles from the API
+                    const response = await axios.get("http://localhost:5000/api/role/");
+                    const validRoles = response.data; // Assume the API returns an array of roles
+                    return validRoles.includes(value);
+                } catch (err) {
+                    console.error("Error fetching roles:", err);
+                    return false; // If the API fails, validation should fail
+                }
+            },
+            message: (props) => `${props.value} is not a valid role.`,
+        },
     },
 });
 

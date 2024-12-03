@@ -21,7 +21,7 @@ createStaff = async (req, res) => {
     
         const { username, email, phone, cnic, password, role } = req.body;
     
-        // Check if an Staff already exists based on email, phone, or cnic
+        // Check if a Staff already exists based on email, phone, or cnic
         const existingStaff = await Staff.findOne({
             $or: [{ email }, { phone }, { cnic }]
         });
@@ -31,14 +31,15 @@ createStaff = async (req, res) => {
         }
     
         // Create new Staff if no existing Staff matches
-        const Staff = new Staff({ username, email, phone, cnic, password, role });
-        await Staff.save();
+        const newStaff = new Staff({ username, email, phone, cnic, password, role });
+        await newStaff.save();
     
         res.status(201).json({ message: "Staff created successfully!" });
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
 };
+
 
 readallStaff = async (req, res) => {
     try {
