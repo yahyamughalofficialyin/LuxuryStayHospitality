@@ -38,54 +38,62 @@ const calculateBill = async (roomId, stayDuration) => {
     }
 };
 
-createBooking = async (req, res) => {
+const createBooking = async (req, res) => {
     try {
         const { error } = validateBooking(req.body);
         if (error) return res.status(400).json({ message: error.details[0].message });
 
-        const { room, bookfor, bookedby, bookingtime, expectedcheckin, checkin, expectedcheckout, checkout } = req.body;
+        const { room, bookfor, bookedby, expectedcheckin, checkin, expectedcheckout, checkout } = req.body;
 
-        if (new Date(expectedcheckin) < new Date(bookingtime)) {
-            return res.status(400).json({ message: "Expected check-in time cannot be before booking time." });
+        // Validate Room
+        const roomData = await axios.get(`http://localhost:5000/api/room/${room}`);
+        if (!roomData.data || roomData.data.available !== "yes") {
+            return res.status(400).json({ message: "Room is unavailable or invalid!" });
         }
 
-        if (new Date(checkin) < new Date(expectedcheckin)) {
-            return res.status(400).json({ message: "Check-in time cannot be before expected check-in time." });
-        }
+        // Update Room Status
+        await axios.patch(`http://localhost:5000/api/room/${room}`, {
+            status: "occupied",
+            available: "no",
+        });
 
-        if (new Date(checkout) < new Date(expectedcheckin) || new Date(checkout) > new Date(expectedcheckout)) {
-            return res.status(400).json({ message: "Check-out time must be within the expected range." });
-        }
+        // Calculate Stay Time
+        const stayDuration = checkin && checkout ? new Date(checkout) - new Date(checkin) : null;
 
-        if (new Date(expectedcheckout) <= new Date(expectedcheckin)) {
-            return res.status(400).json({ message: "Expected check-out time must be after expected check-in time." });
-        }
+        // Fetch Room Type and Calculate Bill
+        const roomTypeResponse = await axios.get(`http://localhost:5000/api/roomtype/${roomData.data.type}`);
+        const roomType = roomTypeResponse.data;
 
-        const duration = moment.duration(moment(checkout).diff(moment(checkin)));
-        const stayDuration = `${Math.floor(duration.asDays())} days ${Math.round(duration.asHours() % 24)} hours`;
+        const stayDays = Math.floor(stayDuration / (1000 * 60 * 60 * 24)); // Days
+        const stayHours = Math.floor((stayDuration % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)); // Hours
 
-        const bill = await calculateBill(room, stayDuration);
+        let bill = stayDays * roomType.fulldayprice;
+        if (stayHours > 0 && stayHours <= 6) bill += roomType.halfdayprice;
+        else if (stayHours > 6) bill += roomType.fulldayprice;
 
+        // Create the Booking
         const newBooking = new Booking({
             room,
             bookfor,
             bookedby,
-            bookingtime,
+            bookingtime: new Date(),
             expectedcheckin,
             checkin,
             expectedcheckout,
             checkout,
-            staytime: stayDuration,
+            staytime: `${stayDays} days, ${stayHours} hours`,
             bill,
         });
 
         await newBooking.save();
-        res.status(201).json({ message: "Room booked successfully!", booking: newBooking });
+
+        res.status(201).json({ message: "Room booked successfully!", Booking: newBooking });
     } catch (err) {
         console.error("Error in Booking:", err);
         res.status(500).json({ message: err.message });
     }
 };
+
 
 
 // Other CRUD functions remain the same (readallBooking, readBooking, updateBooking, deleteBooking)

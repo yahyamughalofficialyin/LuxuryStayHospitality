@@ -9,14 +9,16 @@ const bookingSchema = new mongoose.Schema({
             validator: async function (value) {
                 try {
                     const response = await axios.get("http://localhost:5000/api/room/");
-                    const validRooms = response.data.filter(room => room.available === "yes").map(room => room._id);
-                    return validRooms.includes(value.toString());
+                    const validRooms = response.data.filter(
+                        (room) => room.available === "yes"
+                    );
+                    return validRooms.some((room) => room._id.toString() === value.toString());
                 } catch (err) {
                     console.error("Error fetching Room:", err);
                     return false;
                 }
             },
-            message: "Invalid Room ID or Room is not available.",
+            message: "Invalid or unavailable Room ID.",
         },
     },
     bookfor: {
@@ -26,7 +28,7 @@ const bookingSchema = new mongoose.Schema({
             validator: async function (value) {
                 try {
                     const response = await axios.get("http://localhost:5000/api/guest/");
-                    const validGuests = response.data.map(guest => guest._id);
+                    const validGuests = response.data.map((guest) => guest._id);
                     return validGuests.includes(value.toString());
                 } catch (err) {
                     console.error("Error fetching Guest:", err);
@@ -43,11 +45,14 @@ const bookingSchema = new mongoose.Schema({
             validator: async function (value) {
                 try {
                     const staffResponse = await axios.get("http://localhost:5000/api/staff/");
-                    const roleResponse = await axios.get("http://localhost:5000/api/role/");
-                    const receptionistRole = roleResponse.data.find(role => role.name === "receptionist" && role.status === "active")._id;
+                    const staff = staffResponse.data.find((staff) => staff._id.toString() === value.toString());
 
-                    const validStaff = staffResponse.data.filter(staff => staff.role === receptionistRole).map(staff => staff._id);
-                    return validStaff.includes(value.toString());
+                    if (!staff) return false;
+
+                    const roleResponse = await axios.get("http://localhost:5000/api/role/");
+                    const validRoles = roleResponse.data.filter((role) => role.name === "receptionist");
+
+                    return validRoles.some((role) => role._id.toString() === staff.role.toString());
                 } catch (err) {
                     console.error("Error fetching Staff or Role:", err);
                     return false;
@@ -58,7 +63,6 @@ const bookingSchema = new mongoose.Schema({
     },
     bookingtime: {
         type: Date,
-        required: true,
         default: Date.now,
     },
     expectedcheckin: {
@@ -67,7 +71,6 @@ const bookingSchema = new mongoose.Schema({
     },
     checkin: {
         type: Date,
-        required: true,
     },
     expectedcheckout: {
         type: Date,
@@ -75,15 +78,12 @@ const bookingSchema = new mongoose.Schema({
     },
     checkout: {
         type: Date,
-        required: true,
     },
     staytime: {
-        type: String, // "2 days 5 hours"
-        required: true,
+        type: String, // Store as a human-readable duration
     },
     bill: {
         type: Number,
-        required: true,
     },
 });
 
