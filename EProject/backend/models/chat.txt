@@ -1,0 +1,302 @@
+yeh booking ka model hai:
+
+const mongoose = require("mongoose");
+const axios = require("axios");
+
+const bookingSchema = new mongoose.Schema({
+    room: {
+        type: mongoose.Schema.Types.ObjectId, // Storing room as an ObjectId for consistency
+        required: true,
+        validate: {
+            validator: async function (value) {
+                try {
+                    // Fetch the list of valid rooms from the API
+                    const response = await axios.get("http://localhost:5000/api/room/");
+                    const validRooms = response.data.map(room => room._id); // Extract room IDs
+                    return validRooms.includes(value.toString()); // Ensure the room ID exists
+                } catch (err) {
+                    console.error("Error fetching Room:", err);
+                    return false; // Validation fails if the API fails
+                }
+            },
+            message: (props) => `${props.value} is not a valid Room ID.`,
+        },
+    },
+    bookfor: {
+        type: mongoose.Schema.Types.ObjectId, // Storing guest as an ObjectId for consistency
+        required: true,
+        validate: {
+            validator: async function (value) {
+                try {
+                    // Fetch the list of valid guests from the API
+                    const response = await axios.get("http://localhost:5000/api/guest/");
+                    const validGuests = response.data.map(guest => guest._id); // Extract guest IDs
+                    return validGuests.includes(value.toString()); // Ensure the guest ID exists
+                } catch (err) {
+                    console.error("Error fetching Guest:", err);
+                    return false; // Validation fails if the API fails
+                }
+            },
+            message: (props) => `${props.value} is not a valid Guest ID.`,
+        },
+    },
+    bookedby: {
+        type: mongoose.Schema.Types.ObjectId, // Storing staff as an ObjectId for consistency
+        required: true,
+        validate: {
+            validator: async function (value) {
+                try {
+                    // Fetch the list of valid staffs from the API
+                    const response = await axios.get("http://localhost:5000/api/staff/");
+                    const validStaffs = response.data.map(staff => staff._id); // Extract staff IDs
+                    return validStaffs.includes(value.toString()); // Ensure the staff ID exists
+                } catch (err) {
+                    console.error("Error fetching Staff:", err);
+                    return false; // Validation fails if the API fails
+                }
+            },
+            message: (props) => `${props.value} is not a valid Staff ID.`,
+        },
+    },
+    bookingtime: {
+        type: Timestamp,
+        required: true,
+    },
+    expectedcheckin: {
+        type: Timestamp,
+        required: true,
+    },
+    checkin: {
+        type: Timestamp,
+        required: true,
+    },
+    checkout: {
+        type: Timestamp,
+        required: true,
+    },
+    expectedcheckout: {
+        type: Timestamp,
+        required: true,
+    },
+    staytime: {
+        type: Timestamp,
+        required: true,
+    },
+    bill: {
+        type: Number,
+        required: true,
+    },
+});
+
+module.exports = mongoose.model("Booking", bookingSchema);
+
+
+
+aur yeh booking ak controller:
+
+const Booking = require("../models/Booking");
+const axios = require("axios");
+const Joi = require("joi");
+
+const validateBooking = (data) => {
+    const schema = Joi.object({
+        room: Joi.string().required(),
+        bookfor: Joi.string().required(),
+        bookedby: Joi.string().required(),
+        bookingtime: Joi.string().required(),
+        expectedcheckin: Joi.string().required(),
+        checkin: Joi.string().required(),
+        expectedcheckout: Joi.string().required(),
+        checkout: Joi.string().required(),
+        staytime: Joi.string().required(),
+        bill: Joi.number().required(),
+    });
+    return schema.validate(data);
+};
+
+createBooking = async (req, res) => {
+    try {
+        const { error } = validateBooking(req.body);
+        if (error) return res.status(400).json({ message: error.details[0].message });
+
+        const { room, bookfor, bookedby, bookingtime, expectedcheckin, checkin, expectedcheckout, checkout, staytime, bill } = req.body;
+
+        // Check if Booking exists
+        const roomData = await axios.get(`http://localhost:5000/api/room/${room}`);
+        if (!roomData.data) {
+            return res.status(400).json({ message: "Invalid Room Room ID!" });
+        }
+
+        // Check if Guest exists
+        const guestData = await axios.get(`http://localhost:5000/api/guest/${guest}`);
+        if (!guestData.data) {
+            return res.status(400).json({ message: "Invalid Guest ID!" });
+        }
+
+        // Create the new booking
+        const newBooking = new Booking({ room, bookfor, bookedby, bookingtime, expectedcheckin, checkin, expectedcheckout, checkout, staytime, bill });
+        await newBooking.save();
+
+        res.status(201).json({ message: "Room booked successfully!", Booking: newBooking });
+    } catch (err) {
+        console.error("Error in Booking:", err);
+        res.status(500).json({ message: err.message });
+    }
+};
+
+// Other CRUD functions remain the same (readallBooking, readBooking, updateBooking, deleteBooking)
+readallBooking = async (req, res) => {
+    try {
+        const bookings = await Booking.find();
+        res.status(200).json(bookings);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+readBooking = async (req, res) => {
+    try {
+        const booking = await Booking.findById(req.params.id);
+        if (!booking) return res.status(404).json({ message: "Booking not found!" });
+        res.status(200).json(booking);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+updateBooking = async (req, res) => {
+    try {
+        const { error } = validateBooking(req.body);
+        if (error) return res.status(400).json({ message: error.details[0].message });
+
+        const updatedBooking = await Booking.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        if (!updatedBooking) return res.status(404).json({ message: "Booking not found!" });
+
+        res.status(200).json({ message: "Booking updated successfully!", booking: updatedBooking });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+deleteBooking = async (req, res) => {
+    try {
+        const booking = await Booking.findByIdAndDelete(req.params.id);
+        if (!booking) return res.status(404).json({ message: "Booking not found!" });
+        res.status(200).json({ message: "Booking deleted successfully!" });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+module.exports = {
+    createBooking,
+    readallBooking,
+    readBooking,
+    updateBooking,
+    deleteBooking,
+};
+
+
+
+Ab mujhe is mein following validations chahiye:
+
+room: ( room ki api se id ani chahiye room ki api ka data aisa dikhta hai: 
+
+
+_id
+674f6648a19b699bc4b990f4
+type
+674f5a5a372774a2dea17109
+available
+"yes"
+status
+"available"
+floor
+674f5e76148fbf9735a1c58a
+roomno
+"101"
+__v
+0
+
+toh sirf us hi room ki id aaye jiska available "yes" hai
+
+)
+
+bookfor: (guest ki api se match krny wali id hi allowed hai just)
+bookedby: ( staff ki api mein se aayega aur staff ka json aisa hai:
+
+
+_id
+674eec4ec65cf3799aeb7880
+username
+"Yahya Ahmed Mughal"
+email
+"ysreality@gmail.com"
+phone
+"3132952131"
+cnic
+"4240195204835"
+password
+"$2a$10$o3FdSnuNSRShQgOTvoKylu0c/LBKXuVxBsUoEy1zllKQUDABePQhq"
+role
+674ee9e57823583f9b6f16c8
+__v
+0
+
+
+jis mein role ka column aagay role ki api se connected hai:
+
+http://localhost:5000/api/role/
+
+_id
+674eea627eeef60d0623d8bc
+name
+"receptionist"
+status
+"active"
+limit
+6
+__v
+0
+toh mein chahta hun ke sirf us hi staff ki id allowed ho jiska role receptionist ho )
+
+bookingtime: (current date and current time)
+expectedcheckintime: (current date and current time se peechay nahi ho skta aur expectedcheckouttime se aagay nahi ho skta)
+checkintime ( expectedcheckintime se peechay nahi ho skta )
+checkouttime ( expectedcheckintime se peechay aur expectedcheckout time se aagay nahi ho skta )
+expectedcheckouttime: (expectedcheckintime ke equal ya us se peechay nahi ho skta)
+staytime (checkintime aur checkout time ke darmyan ki duration means kitnay days aur kitny hrs)
+bill (
+
+selected room further type ki api se connected hai:
+
+http://localhost:5000/api/roomtype/
+
+
+
+toh agar duration for example: 
+1 day 1 hr se le 1 day 6 hrs hai toh room ki type hissab se ek fullday aur ek halfday ki price hogi aur agr duration 1 day 7hr se le ke 2 day 0 hrs tk ki hai toh bill mein 2 fulldays ki values add hongi.
+
+ForExample
+
+ek room ki half day price 1000 aur fullday 2000 hai
+
+aur stay time 2 day 5hrs hai
+
+toh bill banega 5000
+
+aur agr stay time 2 days 8hrs hai 
+
+toh bil banega 6000
+
+)
+
+
+Note: bill ki Value mein kuch bhi likh ke submit krun pr save woh hi value ho jo calculated hai.
+
+in tamam keys mein:
+
+bookingtime, expectedcheckin, checkin, expectedcheckout, checkout,
+
+
+value mein date or time donon save hona chahiye

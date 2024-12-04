@@ -15,6 +15,7 @@ const { Laundry } = require("./models/Laundry");
 const { Floor } = require("./models/Floor");
 const { Room } = require("./models/Room");
 const { Food } = require("./models/Food");
+const { Booking } = require("./models/Booking");
 
 // Importing Controllers
 const adminController = require("./controllers/adminController");
@@ -26,6 +27,7 @@ const roomtypeController = require("./controllers/roomtypeController");
 const floorController = require("./controllers/floorController");
 const roomController = require("./controllers/roomController");
 const foodController = require("./controllers/foodController");
+const bookingController = require("./controllers/bookingController");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -206,6 +208,25 @@ app.put("/api/food/update/:id", foodController.updateFood);
 
 // **5. DELETE - Delete Food by ID**
 app.delete("/api/food/delete/:id", foodController.deleteFood);
+
+
+
+// **********************************************************BOOKING CRUD**********************************************************
+
+// **1. CREATE - Add Booking**
+app.post("/api/booking/create", bookingController.createBooking);
+
+// **2. READ - Get All Bookings**
+app.get("/api/booking/", bookingController.readallBooking);
+
+// **3. READ - Get Booking by ID**
+app.get("/api/booking/:id", bookingController.readBooking);
+
+// **4. UPDATE - Update Booking by ID**
+app.put("/api/booking/update/:id", bookingController.updateBooking);
+
+// **5. DELETE - Delete Booking by ID**
+app.delete("/api/booking/delete/:id", bookingController.deleteBooking);
 
 
 // Start Server
