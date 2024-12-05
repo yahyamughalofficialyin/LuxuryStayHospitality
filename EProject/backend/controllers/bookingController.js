@@ -45,20 +45,42 @@ createBooking = async (req, res) => {
 
         const { room, bookfor, bookedby, bookingtime, expectedcheckin, checkin, expectedcheckout, checkout } = req.body;
 
-        if (new Date(expectedcheckin) < new Date(bookingtime)) {
-            return res.status(400).json({ message: "Expected check-in time cannot be before booking time." });
+        // Check if the room is available
+        const roomResponse = await axios.get(`http://localhost:5000/api/room/${room}`);
+        if (roomResponse.data.available === 'no') {
+            return res.status(400).json({ message: "Room is not available." });
         }
 
-        if (new Date(checkin) < new Date(expectedcheckin)) {
+        // Ensure bookingtime is set to the current time if the user provides anything
+        const currentBookingTime = moment().toDate();
+        const bookingTimeParsed = bookingtime ? new Date(bookingtime) : currentBookingTime;
+
+        // Validate expectedcheckin
+        const expectedCheckinParsed = new Date(expectedcheckin);
+        if (expectedCheckinParsed < bookingTimeParsed) {
+            return res.status(400).json({ message: "Expected check-in time cannot be before booking time." });
+        }
+        const maxCheckinDate = moment(bookingTimeParsed).add(1, 'months').toDate();
+        if (expectedCheckinParsed > maxCheckinDate) {
+            return res.status(400).json({ message: "Expected check-in time cannot be more than one month after the booking time." });
+        }
+
+        // Validate checkin
+        const checkinParsed = new Date(checkin);
+        if (checkinParsed < expectedCheckinParsed) {
             return res.status(400).json({ message: "Check-in time cannot be before expected check-in time." });
         }
 
-        if (new Date(checkout) < new Date(expectedcheckin) || new Date(checkout) > new Date(expectedcheckout)) {
-            return res.status(400).json({ message: "Check-out time must be within the expected range." });
+        // Validate expectedcheckout
+        const expectedCheckoutParsed = new Date(expectedcheckout);
+        if (expectedCheckoutParsed < expectedCheckinParsed) {
+            return res.status(400).json({ message: "Expected check-out time must be after expected check-in time." });
         }
 
-        if (new Date(expectedcheckout) <= new Date(expectedcheckin)) {
-            return res.status(400).json({ message: "Expected check-out time must be after expected check-in time." });
+        // Validate checkout
+        const checkoutParsed = new Date(checkout);
+        if (checkoutParsed > expectedCheckoutParsed) {
+            return res.status(400).json({ message: "Check-out time cannot be after expected check-out time." });
         }
 
         // Calculate stay duration
@@ -83,7 +105,7 @@ createBooking = async (req, res) => {
             room,
             bookfor,
             bookedby,
-            bookingtime,
+            bookingtime: currentBookingTime,
             expectedcheckin,
             checkin,
             expectedcheckout,
@@ -100,8 +122,6 @@ createBooking = async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 };
-
-
 
 
 // Other CRUD functions remain the same (readallBooking, readBooking, updateBooking, deleteBooking)
