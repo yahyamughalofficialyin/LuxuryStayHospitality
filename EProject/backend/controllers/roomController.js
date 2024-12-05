@@ -1,6 +1,7 @@
 const Room = require("../models/Room");
 const axios = require("axios");
 const Joi = require("joi");
+const { updateRoomtype } = require("./roomtypeController");
 
 const validateRoom = (data) => {
     const schema = Joi.object({
@@ -130,10 +131,23 @@ deleteRoom = async (req, res) => {
     }
 };
 
+updateRoom = async (req, res) => {
+    try {
+        const updatedRoom = await Room.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        if (!updatedRoom) return res.status(404).json({ message: "Room not found!" });
+
+        res.status(200).json({ message: "Room updated successfully!", room: updatedRoom });
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
+
 module.exports = {
     createRoom,
     readallRoom,
     readRoom,
     updateRoom,
     deleteRoom,
+    updateRoomtype,
 };

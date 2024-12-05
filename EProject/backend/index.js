@@ -228,25 +228,6 @@ app.put("/api/booking/update/:id", bookingController.updateBooking);
 // **5. DELETE - Delete Booking by ID**
 app.delete("/api/booking/delete/:id", bookingController.deleteBooking);
 
-// Updating Room Status on Booking
-app.patch("/api/room/:id", async (req, res) => {
-    try {
-        const roomId = req.params.id;
-        const updates = req.body;
-
-        const updatedRoom = await Room.findByIdAndUpdate(roomId, updates, { new: true });
-
-        if (!updatedRoom) {
-            return res.status(404).json({ message: "Room not found" });
-        }
-
-        res.status(200).json({ message: "Room updated successfully", room: updatedRoom });
-    } catch (error) {
-        console.error("Error updating room:", error);
-        res.status(500).json({ message: "Internal Server Error" });
-    }
-});
-
 
 
 // Start Server
