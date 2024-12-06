@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const axios = require("axios");
 
 const bookingSchema = new mongoose.Schema({
   room: {
@@ -6,7 +7,7 @@ const bookingSchema = new mongoose.Schema({
     required: true,
     validate: {
       validator: async function (value) {
-        // Room validation code remains unchanged
+        // Room validation
       },
       message: "Invalid or unavailable Room ID."
     }
@@ -16,7 +17,14 @@ const bookingSchema = new mongoose.Schema({
     required: true,
     validate: {
       validator: async function (value) {
-        // Guest validation code remains unchanged
+        try {
+          // Validate Guest ID
+          const response = await axios.get(`http://localhost:5000/api/guest/${value}`);
+          const guest = response.data;
+          return !!guest; // Guest exists
+        } catch (error) {
+          return false; // Guest not found
+        }
       },
       message: "Invalid Guest ID."
     }
@@ -26,14 +34,27 @@ const bookingSchema = new mongoose.Schema({
     required: true,
     validate: {
       validator: async function (value) {
-        // Staff validation code remains unchanged
+        try {
+          // Validate Staff ID and Role
+          const staffResponse = await axios.get(`http://localhost:5000/api/staff/${value}`);
+          const staff = staffResponse.data;
+
+          if (!staff) return false; // Staff not found
+
+          const roleResponse = await axios.get(`http://localhost:5000/api/role/${staff.role}`);
+          const role = roleResponse.data;
+
+          return role && role.name === "receptionist"; // Role is receptionist
+        } catch (error) {
+          return false; // Staff or Role validation failed
+        }
       },
       message: "Invalid Staff ID or Staff is not a Receptionist."
     }
   },
   bookingtime: {
     type: Date,
-    default: () => new Date(), // Current time as default
+    default: () => new Date(),
   },
   expectedcheckin: {
     type: Date,

@@ -6,6 +6,7 @@ const validateFood = (data) => {
         name: Joi.string().min(3).required(),
         type: Joi.string().valid("breakfast", "starter", "main", "deserts", "beverages").required(),
         price: Joi.number().required(),
+        quantity: Joi.number().required(),
     });
     return schema.validate(data);
 };
@@ -16,7 +17,7 @@ createFood = async (req, res) => {
         const { error } = validateFood(req.body);
         if (error) return res.status(400).json({ message: error.details[0].message });
     
-        const { name, type, price } = req.body;
+        const { name, type, price ,quantity } = req.body;
     
         // Check if a Food already exists based on name, phone, or cnic
         const existingFood = await Food.findOne({
@@ -28,7 +29,7 @@ createFood = async (req, res) => {
         }
     
         // Create new Food if no existing Food matches
-        const newFood = new Food({ name, type, price });
+        const newFood = new Food({ name, type, price, quantity });
         await newFood.save();
     
         res.status(201).json({ message: "Food created successfully!" });
@@ -59,21 +60,33 @@ readFood = async (req, res) => {
 
 updateFood = async (req, res) => {
     try {
-        const { error } = validateFood(req.body);
-        if (error) return res.status(400).json({ message: error.details[0].message });
+        // Validate only the fields that are present in req.body
+        const fieldsToUpdate = req.body;
+        const allowedFields = [ 'name', 'type', 'price', 'quantity' ]; // List of allowed fields for update
+        
+        // Validate if fields are allowed
+        const invalidFields = Object.keys(fieldsToUpdate).filter(
+            field => !allowedFields.includes(field)
+        );
+        if (invalidFields.length > 0) {
+            return res.status(400).json({ message: `Invalid fields: ${invalidFields.join(', ')}` });
+        }
 
+        // Perform the partial update
         const updatedFood = await Food.findByIdAndUpdate(
             req.params.id,
-            req.body,
-            { new: true }
+            { $set: fieldsToUpdate },
+            { new: true, runValidators: true } // `runValidators` ensures partial fields are validated
         );
+
         if (!updatedFood) return res.status(404).json({ message: "Food not found!" });
 
-        res.status(200).json({ message: "Food updated successfully!" });
+        res.status(200).json({ message: "Food updated successfully!", data: updatedFood });
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
 };
+
 
 deleteFood = async (req, res) => {
     try {

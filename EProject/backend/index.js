@@ -16,6 +16,8 @@ const { Floor } = require("./models/Floor");
 const { Room } = require("./models/Room");
 const { Food } = require("./models/Food");
 const { Booking } = require("./models/Booking");
+const { FoodOrder } = require("./models/Foodorder");
+const { LaundryOrder } = require("./models/Laundry");
 
 // Importing Controllers
 const adminController = require("./controllers/adminController");
@@ -28,6 +30,8 @@ const floorController = require("./controllers/floorController");
 const roomController = require("./controllers/roomController");
 const foodController = require("./controllers/foodController");
 const bookingController = require("./controllers/bookingController");
+const foodorderController = require("./controllers/foodorderController");
+const laundryorderController = require("./controllers/laundryorderController");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -227,6 +231,44 @@ app.put("/api/booking/update/:id", bookingController.updateBooking);
 
 // **5. DELETE - Delete Booking by ID**
 app.delete("/api/booking/delete/:id", bookingController.deleteBooking);
+
+
+
+// **********************************************************FOOD ORDER CRUD**********************************************************
+
+// **1. CREATE - Add Foodorder**
+app.post("/api/foodorder/create", foodorderController.createFoodorder);
+
+// **2. READ - Get All Foodorders**
+app.get("/api/foodorder/", foodorderController.readallFoodorder);
+
+// **3. READ - Get Foodorder by ID**
+app.get("/api/foodorder/:id", foodorderController.readFoodorder);
+
+// **4. UPDATE - Update Foodorder by ID**
+app.put("/api/foodorder/update/:id", foodorderController.updateFoodorder);
+
+// **5. DELETE - Delete Foodorder by ID**
+app.delete("/api/foodorder/delete/:id", foodorderController.deleteFoodorder);
+
+
+
+// **********************************************************Laundry Service CRUD**********************************************************
+
+// **1. CREATE - Add Laundryorder**
+app.post("/api/laundryorder/create", laundryorderController.createLaundryorder);
+
+// **2. READ - Get All Laundryorders**
+app.get("/api/laundryorder/", laundryorderController.readallLaundryorder);
+
+// **3. READ - Get Laundryorder by ID**
+app.get("/api/laundryorder/:id", laundryorderController.readLaundryorder);
+
+// **4. UPDATE - Update Laundryorder by ID**
+app.put("/api/laundryorder/update/:id", laundryorderController.updateLaundryorder);
+
+// **5. DELETE - Delete Laundryorder by ID**
+app.delete("/api/laundryorder/delete/:id", laundryorderController.deleteLaundryorder);
 
 
 

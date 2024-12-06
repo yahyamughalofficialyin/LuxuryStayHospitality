@@ -14,6 +14,10 @@ const foodSchema = new mongoose.Schema({
         type: Number,
         required: true,
     },
+    quantity: {
+        type: Number,
+        required: true,
+    },
 });
 
 module.exports = mongoose.model("Food", foodSchema);
