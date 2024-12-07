@@ -1,24 +1,27 @@
 const Foodorder = require("../models/FoodOrder");
 const Joi = require("joi");
-const axios = require("axios")
+const axios = require("axios");
 
+// Joi Validation
 const validateFoodorder = (data) => {
     const schema = Joi.object({
         foodid: Joi.string().required(),
-        quantity: Joi.number().required(),
-        bill: Joi.number().required(),
-        status: Joi.string().valid("recieved","gettingready", "read", "delivered").required(),
+        quantity: Joi.number().min(1).required(),
+        bill: Joi.number().optional(), // Bill will be calculated automatically
+        status: Joi.string().valid("recieved", "gettingready", "read", "delivered").required(),
         paymentstatus: Joi.string().valid("paid", "unpaid").required(),
         type: Joi.string().valid("takeaway", "dinein", "roomserve").required(),
-        ordertime: Joi.date().required(),
-        room: Joi.string().required(),
+        ordertime: Joi.date().optional(), // Will be auto-assigned
+        room: Joi.string().optional(), // Required only for "roomserve" type
         orderby: Joi.string().required(),
     });
     return schema.validate(data);
 };
 
+// Create a Food Order
 const createFoodorder = async (req, res) => {
     try {
+        // Validate the input
         const { error } = validateFoodorder(req.body);
         if (error) return res.status(400).json({ message: error.details[0].message });
 
@@ -36,13 +39,13 @@ const createFoodorder = async (req, res) => {
             });
         }
 
-        // Deduct the quantity
-        const updatedQuantity = food.quantity - quantity;
-        await axios.put(`http://localhost:5000/api/food/update/${foodid}`, { quantity: updatedQuantity });
-
-        // Create the order
+        // Create the order (only if all validations pass)
         const newFoodorder = new Foodorder({ foodid, quantity, status, paymentstatus, type, ordertime, room, orderby });
         await newFoodorder.save();
+
+        // Deduct the quantity after order creation
+        const updatedQuantity = food.quantity - quantity;
+        await axios.put(`http://localhost:5000/api/food/update/${foodid}`, { quantity: updatedQuantity });
 
         res.status(201).json({ message: "Order placed successfully!" });
     } catch (err) {
@@ -54,8 +57,8 @@ const createFoodorder = async (req, res) => {
 };
 
 
-
-readallFoodorder = async (req, res) => {
+// Read All Orders
+const readallFoodorder = async (req, res) => {
     try {
         const foodorders = await Foodorder.find();
         res.status(200).json(foodorders);
@@ -64,7 +67,8 @@ readallFoodorder = async (req, res) => {
     }
 };
 
-readFoodorder = async (req, res) => {
+// Read a Single Order
+const readFoodorder = async (req, res) => {
     try {
         const foodorder = await Foodorder.findById(req.params.id);
         if (!foodorder) return res.status(404).json({ message: "Order not found!" });
@@ -74,25 +78,25 @@ readFoodorder = async (req, res) => {
     }
 };
 
-updateFoodorder = async (req, res) => {
+// Update an Order
+const updateFoodorder = async (req, res) => {
     try {
         const { error } = validateFoodorder(req.body);
         if (error) return res.status(400).json({ message: error.details[0].message });
 
-        const updatedFoodorder = await Foodorder.findByIdAndUpdate(
-            req.params.id,
-            req.body,
-            { new: true }
-        );
+        const updatedFoodorder = await Foodorder.findByIdAndUpdate(req.params.id, req.body, {
+            new: true,
+        });
         if (!updatedFoodorder) return res.status(404).json({ message: "Order not found!" });
 
-        res.status(200).json({ message: "Order updated successfully!" });
+        res.status(200).json({ message: "Order updated successfully!", order: updatedFoodorder });
     } catch (err) {
         res.status(500).json({ message: err.message });
     }
 };
 
-deleteFoodorder = async (req, res) => {
+// Delete an Order
+const deleteFoodorder = async (req, res) => {
     try {
         const foodorder = await Foodorder.findByIdAndDelete(req.params.id);
         if (!foodorder) return res.status(404).json({ message: "Order not found!" });
@@ -107,5 +111,5 @@ module.exports = {
     readallFoodorder,
     readFoodorder,
     updateFoodorder,
-    deleteFoodorder
-}
+    deleteFoodorder,
+};
