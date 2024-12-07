@@ -1,4 +1,4 @@
-const Foodorder = require("../models/Foodorder");
+const Foodorder = require("../models/FoodOrder");
 const Joi = require("joi");
 const axios = require("axios")
 
@@ -8,7 +8,10 @@ const validateFoodorder = (data) => {
         quantity: Joi.number().required(),
         bill: Joi.number().required(),
         status: Joi.string().valid("recieved","gettingready", "read", "delivered").required(),
+        paymentstatus: Joi.string().valid("paid", "unpaid").required(),
+        type: Joi.string().valid("takeaway", "dinein", "roomserve").required(),
         ordertime: Joi.date().required(),
+        room: Joi.string().required(),
         orderby: Joi.string().required(),
     });
     return schema.validate(data);
@@ -19,7 +22,7 @@ const createFoodorder = async (req, res) => {
         const { error } = validateFoodorder(req.body);
         if (error) return res.status(400).json({ message: error.details[0].message });
 
-        const { foodid, quantity, status, orderby } = req.body;
+        const { foodid, quantity, status, paymentstatus, type, ordertime, room, orderby } = req.body;
 
         // Check if the food item exists
         const foodResponse = await axios.get(`http://localhost:5000/api/food/${foodid}`);
@@ -38,7 +41,7 @@ const createFoodorder = async (req, res) => {
         await axios.put(`http://localhost:5000/api/food/update/${foodid}`, { quantity: updatedQuantity });
 
         // Create the order
-        const newFoodorder = new Foodorder({ foodid, quantity, status, orderby });
+        const newFoodorder = new Foodorder({ foodid, quantity, status, paymentstatus, type, ordertime, room, orderby });
         await newFoodorder.save();
 
         res.status(201).json({ message: "Order placed successfully!" });

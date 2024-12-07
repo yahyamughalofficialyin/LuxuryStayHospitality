@@ -8,6 +8,8 @@ const validateLaundryorder = (data) => {
         quantity: Joi.number().required(),
         bill: Joi.number().required(),
         status: Joi.string().valid("pending","gettingwashed", "drying", "ready").required(),
+        paymentstatus: Joi.string().valid("paid", "unpaid").required(),
+        room: Joi.string().required(),
         ordertime: Joi.date().required(),
         orderby: Joi.string().required(),
     });
@@ -19,7 +21,7 @@ const createLaundryorder = async (req, res) => {
         const { error } = validateLaundryorder(req.body);
         if (error) return res.status(400).json({ message: error.details[0].message });
 
-        const { laundryid, quantity, status, orderby } = req.body;
+        const { laundryid, quantity, status, paymentstatus, room, orderby } = req.body;
 
         // Check if the laundry item exists
         const laundryResponse = await axios.get(`http://localhost:5000/api/laundry/${laundryid}`);
@@ -27,7 +29,7 @@ const createLaundryorder = async (req, res) => {
         if (!laundry) return res.status(404).json({ message: "Laundry item not found!" });
 
         // Create the order
-        const newLaundryorder = new Laundryorder({ laundryid, quantity, status, orderby });
+        const newLaundryorder = new Laundryorder({ laundryid, quantity, status, paymentstatus, room, orderby });
         await newLaundryorder.save();
 
         res.status(201).json({ message: "Order placed successfully!" });

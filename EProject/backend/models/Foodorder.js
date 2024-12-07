@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const axios = require("axios");
+const { required } = require("joi");
 
 const foodorderSchema = new mongoose.Schema({
     foodid: {
@@ -25,14 +26,45 @@ const foodorderSchema = new mongoose.Schema({
     },
     bill: {
         type: Number,
+        required: true,
     },
     status: {
         type: String,
-        enum: ["recieved","gettingready", "read", "delivered"],
+        enum: ["recieved", "gettingready", "read", "delivered"],
+        default: "recieved",
+        required: true,
+    },
+    paymentstatus: {
+        type: String,
+        enum: ["paid", "unpaid"],
+        default: "unpaid",
+        required: true,
+    },
+    type: {
+        type: String,
+        enum: ["dinein", "takeaway", "roomserve"],
+        required: true,
     },
     ordertime: {
         type: Date,
         default: () => new Date(),
+        required: true,
+    },
+    room: {
+        type: mongoose.Schema.Types.ObjectId,
+        default: null,
+        validate: {
+            validator: async function (value) {
+                if (this.type !== 'roomserve') return true; // Skip validation for non-roomserve orders
+                try {
+                    const response = await axios.get(`http://localhost:5000/api/room/${value}`);
+                    return response.data && response.data.available === 'no';
+                } catch (error) {
+                    return false;
+                }
+            },
+            message: "Invalid Room ID or the Room is Not Booked By Anyone.",
+        },
     },
     orderby: {
         type: mongoose.Schema.Types.ObjectId,
@@ -51,12 +83,18 @@ const foodorderSchema = new mongoose.Schema({
     },
 });
 
-// Middleware to enforce current ordertime and dynamic bill calculation
+// Middleware to handle room logic based on type
+foodorderSchema.pre("validate", function (next) {
+    if (this.type !== "roomserve") {
+        this.room = null; // Set room to null for non-roomserve types
+    }
+    next();
+});
+
 foodorderSchema.pre("save", async function (next) {
-    this.ordertime = new Date(); // Override with the current time
+    this.ordertime = new Date();
 
     try {
-        // Fetch the food item details to calculate the bill
         const foodResponse = await axios.get(`http://localhost:5000/api/food/${this.foodid}`);
         const food = foodResponse.data;
 
@@ -73,4 +111,4 @@ foodorderSchema.pre("save", async function (next) {
     next();
 });
 
-module.exports = mongoose.model("Foodorder", foodorderSchema);
+module.exports = mongoose.model("FoodOrder", foodorderSchema);

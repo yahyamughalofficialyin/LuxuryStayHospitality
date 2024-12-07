@@ -30,6 +30,27 @@ const laundryorderSchema = new mongoose.Schema({
         type: String,
         enum: ["pending","gettingwashed", "drying", "ready"],
     },
+    paymentstatus :{
+        type: String,
+        enum: ["paid","unpaid"],
+    },
+    room: {
+        type: mongoose.Schema.Types.ObjectId,
+        required: true,
+        validate: {
+            validator: async function (value) {
+                try {
+                    const response = await axios.get(`http://localhost:5000/api/room/${value}`);
+                    
+                    // Check if the response contains valid data and 'available' is 'no'
+                    return response.data && response.data.available === 'no';
+                } catch (error) {
+                    return false; // Return false if the request fails
+                }
+            },
+            message: "Invalid Room ID or the room is not booked by anyone.",
+        },
+    },    
     ordertime: {
         type: Date,
         default: () => new Date(),

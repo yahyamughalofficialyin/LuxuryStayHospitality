@@ -16,7 +16,7 @@ const { Floor } = require("./models/Floor");
 const { Room } = require("./models/Room");
 const { Food } = require("./models/Food");
 const { Booking } = require("./models/Booking");
-const { FoodOrder } = require("./models/Foodorder");
+const { FoodOrder } = require("./models/FoodOrder");
 const { LaundryOrder } = require("./models/Laundry");
 
 // Importing Controllers
