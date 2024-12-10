@@ -110,7 +110,7 @@ readRoom = async (req, res) => {
 updateRoom = async (req, res) => {
     try {
         // Allowed fields for partial update
-        const allowedFields = ["type", "available", "status", "floor", "roomno"];
+        const allowedFields = ["type", "available", "status", "floor"];
 
         // Extract fields from the request body
         const fieldsToUpdate = req.body;
@@ -131,7 +131,6 @@ updateRoom = async (req, res) => {
             available: Joi.string().valid("yes", "no"),
             status: Joi.string().valid("occupied", "cleaning", "available"),
             floor: Joi.string(),
-            roomno: Joi.number(),
         });
 
         // Validate the fields present in the request body
@@ -171,17 +170,6 @@ deleteRoom = async (req, res) => {
         const room = await Room.findByIdAndDelete(req.params.id);
         if (!room) return res.status(404).json({ message: "Room not found!" });
         res.status(200).json({ message: "Room deleted successfully!" });
-    } catch (err) {
-        res.status(500).json({ message: err.message });
-    }
-};
-
-updateRoom = async (req, res) => {
-    try {
-        const updatedRoom = await Room.findByIdAndUpdate(req.params.id, req.body, { new: true });
-        if (!updatedRoom) return res.status(404).json({ message: "Room not found!" });
-
-        res.status(200).json({ message: "Room updated successfully!", room: updatedRoom });
     } catch (err) {
         res.status(500).json({ message: err.message });
     }

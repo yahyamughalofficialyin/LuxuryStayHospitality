@@ -67,10 +67,10 @@ readFloor = async (req, res) => {
     }
 };
 
-updateFloor = async (req, res) => {
+const updateFloor = async (req, res) => {
     try {
-        // Allowed fields for partial update
-        const allowedFields = ['number', 'available', 'limit'];
+        // Allowed fields for update
+        const allowedFields = ['available', 'limit'];
 
         // Extract and validate fields from req.body
         const fieldsToUpdate = req.body;
@@ -80,14 +80,13 @@ updateFloor = async (req, res) => {
             field => !allowedFields.includes(field)
         );
         if (invalidFields.length > 0) {
-            return res.status(400).json({ message: `Invalid fields: ${invalidFields.join(', ')}` });
+            return res.status(400).json({ message: `Only 'available' and 'limit' can be updated! Invalid fields: ${invalidFields.join(', ')}` });
         }
 
-        // Validate fields using Joi if they are present
+        // Validate fields using Joi
         const schema = Joi.object({
-            number: Joi.number().min(1),
-            available: Joi.string().valid("yes", "no"),
-            limit: Joi.number(),
+            available: Joi.string().valid("yes", "no").required(),
+            limit: Joi.number().required(),
         });
 
         const { error } = schema.validate(fieldsToUpdate);

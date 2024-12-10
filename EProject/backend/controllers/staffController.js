@@ -1,6 +1,7 @@
 const Staff = require("../models/Staff");
 const Joi = require("joi");
 const axios = require("axios");
+const bcrypt = require("bcrypt");
 
 const validateStaff = (data) => {
     const schema = Joi.object({
@@ -106,6 +107,12 @@ updateStaff = async (req, res) => {
         // Validate the fields present in the request body
         const { error } = schema.validate(fieldsToUpdate);
         if (error) return res.status(400).json({ message: error.details[0].message });
+
+        // If password is present, hash it before saving
+        if (fieldsToUpdate.password) {
+            const salt = await bcrypt.genSalt(10);
+            fieldsToUpdate.password = await bcrypt.hash(fieldsToUpdate.password, salt);
+        }
 
         // Perform the partial update
         const updatedStaff = await Staff.findByIdAndUpdate(
