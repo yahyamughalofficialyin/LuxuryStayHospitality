@@ -9,8 +9,8 @@ const bookingSchema = new mongoose.Schema({
       validator: async function (value) {
         // Room validation
       },
-      message: "Invalid or unavailable Room ID."
-    }
+      message: "Invalid or unavailable Room ID.",
+    },
   },
   bookfor: {
     type: mongoose.Schema.Types.ObjectId,
@@ -18,7 +18,6 @@ const bookingSchema = new mongoose.Schema({
     validate: {
       validator: async function (value) {
         try {
-          // Validate Guest ID
           const response = await axios.get(`http://localhost:5000/api/guest/${value}`);
           const guest = response.data;
           return !!guest; // Guest exists
@@ -26,8 +25,8 @@ const bookingSchema = new mongoose.Schema({
           return false; // Guest not found
         }
       },
-      message: "Invalid Guest ID."
-    }
+      message: "Invalid Guest ID.",
+    },
   },
   bookedby: {
     type: mongoose.Schema.Types.ObjectId,
@@ -35,22 +34,21 @@ const bookingSchema = new mongoose.Schema({
     validate: {
       validator: async function (value) {
         try {
-          // Validate Staff ID and Role
           const staffResponse = await axios.get(`http://localhost:5000/api/staff/${value}`);
           const staff = staffResponse.data;
 
-          if (!staff) return false; // Staff not found
+          if (!staff) return false;
 
           const roleResponse = await axios.get(`http://localhost:5000/api/role/${staff.role}`);
           const role = roleResponse.data;
 
-          return role && role.name === "receptionist"; // Role is receptionist
+          return role && role.name === "receptionist";
         } catch (error) {
-          return false; // Staff or Role validation failed
+          return false;
         }
       },
-      message: "Invalid Staff ID or Staff is not a Receptionist."
-    }
+      message: "Invalid Staff ID or Staff is not a Receptionist.",
+    },
   },
   bookingtime: {
     type: Date,
@@ -58,24 +56,26 @@ const bookingSchema = new mongoose.Schema({
   },
   expectedcheckin: {
     type: Date,
-    required: true
+    required: true,
   },
   checkin: {
-    type: Date
+    type: Date,
+    default: null, // Default to null
   },
   expectedcheckout: {
     type: Date,
-    required: true
+    required: true,
   },
   checkout: {
-    type: Date
+    type: Date,
+    default: null, // Default to null
   },
   staytime: {
-    type: String // Store as a human-readable duration (e.g., "00 days 00 hrs")
+    type: String, // Store as a human-readable duration
   },
   bill: {
-    type: Number
-  }
+    type: Number,
+  },
 });
 
 module.exports = mongoose.model("Booking", bookingSchema);

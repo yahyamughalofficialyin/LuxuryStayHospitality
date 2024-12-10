@@ -3,125 +3,99 @@ const axios = require("axios");
 const Joi = require("joi");
 const moment = require("moment");
 
-const validateBooking = (data) => {
-    const schema = Joi.object({
-        room: Joi.string().required(),
-        bookfor: Joi.string().required(),
-        bookedby: Joi.string().required(),
-        bookingtime: Joi.date().required(),
-        expectedcheckin: Joi.date().required(),
-        checkin: Joi.date().required(),
-        expectedcheckout: Joi.date().required(),
-        checkout: Joi.date().required(),
-        staytime: Joi.string().required(),
-        bill: Joi.number().required(),
-    });
-    return schema.validate(data);
+const calculateBill = async (roomId, duration) => {
+    const roomResponse = await axios.get(`http://localhost:5000/api/room/${roomId}`);
+    const roomTypeId = roomResponse.data.type;
+
+    const roomTypeResponse = await axios.get(`http://localhost:5000/api/roomtype/${roomTypeId}`);
+    const { halfdayprice, fulldayprice } = roomTypeResponse.data;
+
+    const [days, hours] = duration.split(" days ").map((val) => parseInt(val.replace(" hours", ""), 10));
+    const fullDays = days;
+    const halfDays = hours > 6 ? 1 : 0;
+
+    return fullDays * fulldayprice + halfDays * halfdayprice;
 };
 
-const calculateBill = async (roomId, stayDuration) => {
+
+const createBooking = async (req, res) => {
     try {
-        const roomResponse = await axios.get(`http://localhost:5000/api/room/${roomId}`);
-        const roomTypeId = roomResponse.data.type;
+        const { room, bookfor, bookedby, expectedcheckin, expectedcheckout } = req.body;
 
-        const roomTypeResponse = await axios.get(`http://localhost:5000/api/roomtype/${roomTypeId}`);
-        const { halfdayprice, fulldayprice } = roomTypeResponse.data;
-
-        const [days, hours] = stayDuration.split(" days ").map(value => parseInt(value.replace(" hours", ""), 10));
-        const fullDays = days;
-        const halfDays = hours > 6 ? 1 : 0;
-
-        return fullDays * fulldayprice + halfDays * halfdayprice;
-    } catch (err) {
-        console.error("Error calculating bill:", err);
-        return 0; // Default in case of error
-    }
-};
-
-createBooking = async (req, res) => {
-    try {
-        const { error } = validateBooking(req.body);
-        if (error) return res.status(400).json({ message: error.details[0].message });
-
-        const { room, bookfor, bookedby, bookingtime, expectedcheckin, checkin, expectedcheckout, checkout } = req.body;
-
-        // Check if the room is available
+        // Validate room
         const roomResponse = await axios.get(`http://localhost:5000/api/room/${room}`);
-        if (roomResponse.data.available === 'no') {
-            return res.status(400).json({ message: "Room is not available." });
+        if (!roomResponse.data || roomResponse.data.available !== 'yes') {
+            return res.status(400).json({ message: "Room is not available for booking." });
         }
 
-        // Ensure bookingtime is set to the current time if the user provides anything
-        const currentBookingTime = moment().toDate();
-        const bookingTimeParsed = bookingtime ? new Date(bookingtime) : currentBookingTime;
+        // Validate guest
+        const guestResponse = await axios.get(`http://localhost:5000/api/guest/${bookfor}`);
+        if (!guestResponse.data) {
+            return res.status(400).json({ message: "Invalid Guest ID." });
+        }
+
+        // Validate staff
+        const staffResponse = await axios.get(`http://localhost:5000/api/staff/${bookedby}`);
+        const staff = staffResponse.data;
+        if (!staff) return res.status(400).json({ message: "Invalid Staff ID." });
+
+        const roleResponse = await axios.get(`http://localhost:5000/api/role/${staff.role}`);
+        if (!roleResponse.data || roleResponse.data.name !== "receptionist") {
+            return res.status(400).json({ message: "Staff is not a receptionist." });
+        }
+
+        const bookingTime = new Date();
+        const expectedCheckinParsed = new Date(expectedcheckin);
+        const expectedCheckoutParsed = new Date(expectedcheckout);
 
         // Validate expectedcheckin
-        const expectedCheckinParsed = new Date(expectedcheckin);
-        if (expectedCheckinParsed < bookingTimeParsed) {
-            return res.status(400).json({ message: "Expected check-in time cannot be before booking time." });
-        }
-        const maxCheckinDate = moment(bookingTimeParsed).add(1, 'months').toDate();
-        if (expectedCheckinParsed > maxCheckinDate) {
-            return res.status(400).json({ message: "Expected check-in time cannot be more than one month after the booking time." });
-        }
-
-        // Validate checkin
-        const checkinParsed = new Date(checkin);
-        if (checkinParsed < expectedCheckinParsed) {
-            return res.status(400).json({ message: "Check-in time cannot be before expected check-in time." });
+        if (
+            expectedCheckinParsed < bookingTime ||
+            expectedCheckinParsed > moment(bookingTime).add(20, "days").toDate()
+        ) {
+            return res.status(400).json({ message: "Expected check-in time is invalid." });
         }
 
         // Validate expectedcheckout
-        const expectedCheckoutParsed = new Date(expectedcheckout);
         if (expectedCheckoutParsed < expectedCheckinParsed) {
             return res.status(400).json({ message: "Expected check-out time must be after expected check-in time." });
         }
 
-        // Validate checkout
-        const checkoutParsed = new Date(checkout);
-        if (checkoutParsed > expectedCheckoutParsed) {
-            return res.status(400).json({ message: "Check-out time cannot be after expected check-out time." });
-        }
-
-        // Calculate stay duration
-        const duration = moment.duration(moment(checkout).diff(moment(checkin)));
+        // Calculate stay duration using expected dates
+        const duration = moment.duration(moment(expectedCheckoutParsed).diff(moment(expectedCheckinParsed)));
         const stayDuration = `${Math.floor(duration.asDays())} days ${Math.round(duration.asHours() % 24)} hours`;
 
         // Calculate bill
         const bill = await calculateBill(room, stayDuration);
 
-        // Update room availability and status
-        const roomUpdateResponse = await axios.put(`http://localhost:5000/api/room/update/${room}`, {
-            available: "no",
-            status: "occupied",
-        });
-
-        if (roomUpdateResponse.status !== 200) {
-            return res.status(400).json({ message: "Failed to update room status." });
-        }
-
-        // Create booking
         const newBooking = new Booking({
             room,
             bookfor,
             bookedby,
-            bookingtime: currentBookingTime,
-            expectedcheckin,
-            checkin,
-            expectedcheckout,
-            checkout,
+            bookingtime: bookingTime,
+            expectedcheckin: expectedCheckinParsed,
+            expectedcheckout: expectedCheckoutParsed,
             staytime: stayDuration,
             bill,
         });
 
         await newBooking.save();
 
-        res.status(201).json({ message: "Room booked successfully!", booking: newBooking });
+        // Update room status
+        await axios.put(`http://localhost:5000/api/room/update/${room}`, {
+            available: "no",
+            status: "occupied",
+        });
+
+        res.status(201).json({ message: "Booking created successfully!", booking: newBooking });
     } catch (err) {
-        console.error("Error in Booking:", err);
+        console.error("Error creating booking:", err);
         res.status(500).json({ message: err.message });
     }
 };
+
+
+
 
 
 // Other CRUD functions remain the same (readallBooking, readBooking, updateBooking, deleteBooking)
@@ -144,48 +118,81 @@ readBooking = async (req, res) => {
     }
 };
 
-updateBooking = async (req, res) => {
+const updateBooking = async (req, res) => {
     try {
-        // Allowed fields for partial update
-        const allowedFields = [
-            'room',
-            'bookfor',
-            'bookedby',
-            'bookingtime',
-            'expectedcheckin',
-            'checkin',
-            'expectedcheckout',
-            'checkout',
-            'staytime',
-            'bill',
-        ];
+        const updates = req.body; // Declare updates and assign request body
 
-        // Extract and validate fields from req.body
-        const fieldsToUpdate = req.body;
+        const booking = await Booking.findById(req.params.id);
+        if (!booking) return res.status(404).json({ message: "Booking not found!" });
 
-        // Validate if the fields are allowed
-        const invalidFields = Object.keys(fieldsToUpdate).filter(
-            field => !allowedFields.includes(field)
-        );
-        if (invalidFields.length > 0) {
-            return res.status(400).json({ message: `Invalid fields: ${invalidFields.join(', ')}` });
+        // Validate room (if being updated)
+        if (updates.room) {
+            const roomResponse = await axios.get(`http://localhost:5000/api/room/${updates.room}`);
+            if (!roomResponse.data || roomResponse.data.available !== 'yes') {
+                return res.status(400).json({ message: "Room is not available for booking." });
+            }
         }
 
-        // Perform the partial update
-        const updatedBooking = await Booking.findByIdAndUpdate(
-            req.params.id,
-            { $set: fieldsToUpdate },
-            { new: true, runValidators: true } // Ensure validation for fields being updated
-        );
+        // Validate guest (if being updated)
+        if (updates.bookfor) {
+            const guestResponse = await axios.get(`http://localhost:5000/api/guest/${updates.bookfor}`);
+            if (!guestResponse.data) {
+                return res.status(400).json({ message: "Invalid Guest ID." });
+            }
+        }
 
+        // Validate staff (if being updated)
+        if (updates.bookedby) {
+            const staffResponse = await axios.get(`http://localhost:5000/api/staff/${updates.bookedby}`);
+            const staff = staffResponse.data;
+            if (!staff) return res.status(400).json({ message: "Invalid Staff ID." });
+
+            const roleResponse = await axios.get(`http://localhost:5000/api/role/${staff.role}`);
+            if (!roleResponse.data || roleResponse.data.name !== "receptionist") {
+                return res.status(400).json({ message: "Staff is not a receptionist." });
+            }
+        }
+
+        // Validate expectedcheckin
+        if (updates.expectedcheckin) {
+            const expectedCheckinParsed = new Date(updates.expectedcheckin);
+            if (
+                expectedCheckinParsed < booking.bookingtime ||
+                expectedCheckinParsed > moment(booking.bookingtime).add(20, "days").toDate()
+            ) {
+                return res.status(400).json({ message: "Expected check-in time is invalid." });
+            }
+        }
+
+        // Validate checkout
+        if (updates.checkout) {
+            const checkoutParsed = new Date(updates.checkout);
+            if (checkoutParsed < new Date(booking.expectedcheckin)) {
+                return res.status(400).json({ message: "Check-out time must be after expected check-in time." });
+            }
+        }
+
+        // Update staytime and bill if dates are changed
+        if (updates.expectedcheckin || updates.checkout) {
+            const checkinDate = new Date(updates.expectedcheckin || booking.expectedcheckin);
+            const checkoutDate = new Date(updates.checkout || booking.checkout);
+            const duration = moment.duration(moment(checkoutDate).diff(moment(checkinDate)));
+            const stayDuration = `${Math.floor(duration.asDays())} days ${Math.round(duration.asHours() % 24)} hours`;
+
+            updates.staytime = stayDuration;
+            updates.bill = await calculateBill(updates.room || booking.room, stayDuration);
+        }
+
+        const updatedBooking = await Booking.findByIdAndUpdate(req.params.id, { $set: updates }, { new: true, runValidators: true });
         if (!updatedBooking) return res.status(404).json({ message: "Booking not found!" });
 
         res.status(200).json({ message: "Booking updated successfully!", booking: updatedBooking });
     } catch (err) {
-        console.error("Error updating Booking:", err);
+        console.error("Error updating booking:", err);
         res.status(500).json({ message: err.message });
     }
 };
+
 
 
 deleteBooking = async (req, res) => {

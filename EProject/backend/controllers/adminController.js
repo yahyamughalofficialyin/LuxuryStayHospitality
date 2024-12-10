@@ -9,7 +9,7 @@ const validateAdmin = (data) => {
       .required(),
     email: Joi.string().email().required(),
     phone: Joi.string()
-      .pattern(new RegExp("^[0-9]{10}$")) // Exactly 10 digits
+      .pattern(new RegExp("^[0-9]{11}$")) // Exactly 11 digits
       .required(),
     password: Joi.string().min(6).required()
   });
@@ -71,7 +71,7 @@ const updateAdmin = async (req, res) => {
       const schema = Joi.object({
         username: Joi.string().pattern(new RegExp("^[a-zA-Z]+$")).min(3),
         email: Joi.string().email(),
-        phone: Joi.string().pattern(new RegExp("^[0-9]{10}$")),
+        phone: Joi.string().pattern(new RegExp("^[0-9]{11}$")),
         password: Joi.string().min(6)
       }).fork([key], (schemaField) => schemaField.required());
       const { error } = schema.validate(validationData);
