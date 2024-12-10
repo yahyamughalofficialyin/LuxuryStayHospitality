@@ -69,21 +69,46 @@ readFloor = async (req, res) => {
 
 updateFloor = async (req, res) => {
     try {
-        const { error } = validateFloor(req.body);
+        // Allowed fields for partial update
+        const allowedFields = ['number', 'available', 'limit'];
+
+        // Extract and validate fields from req.body
+        const fieldsToUpdate = req.body;
+
+        // Check for invalid fields
+        const invalidFields = Object.keys(fieldsToUpdate).filter(
+            field => !allowedFields.includes(field)
+        );
+        if (invalidFields.length > 0) {
+            return res.status(400).json({ message: `Invalid fields: ${invalidFields.join(', ')}` });
+        }
+
+        // Validate fields using Joi if they are present
+        const schema = Joi.object({
+            number: Joi.number().min(1),
+            available: Joi.string().valid("yes", "no"),
+            limit: Joi.number(),
+        });
+
+        const { error } = schema.validate(fieldsToUpdate);
         if (error) return res.status(400).json({ message: error.details[0].message });
 
+        // Update the floor with only the provided fields
         const updatedFloor = await Floor.findByIdAndUpdate(
             req.params.id,
-            req.body,
-            { new: true }
+            { $set: fieldsToUpdate },
+            { new: true, runValidators: true } // Ensure validation during the update
         );
+
         if (!updatedFloor) return res.status(404).json({ message: "Floor not found!" });
 
-        res.status(200).json({ message: "Floor updated successfully!" });
+        res.status(200).json({ message: "Floor updated successfully!", floor: updatedFloor });
     } catch (err) {
+        console.error("Error updating Floor:", err);
         res.status(500).json({ message: err.message });
     }
 };
+
 
 deleteFloor = async (req, res) => {
     try {

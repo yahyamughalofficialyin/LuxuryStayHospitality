@@ -77,21 +77,55 @@ readStaff = async (req, res) => {
 
 updateStaff = async (req, res) => {
     try {
-        const { error } = validateStaff(req.body);
+        // Allowed fields for partial update
+        const allowedFields = ["username", "email", "phone", "cnic", "password", "role"];
+
+        // Extract fields from the request body
+        const fieldsToUpdate = req.body;
+
+        // Validate if the provided fields are allowed
+        const invalidFields = Object.keys(fieldsToUpdate).filter(
+            (field) => !allowedFields.includes(field)
+        );
+        if (invalidFields.length > 0) {
+            return res
+                .status(400)
+                .json({ message: `Invalid fields: ${invalidFields.join(", ")}` });
+        }
+
+        // Create a Joi schema for validating only the provided fields
+        const schema = Joi.object({
+            username: Joi.string(),
+            email: Joi.string().email(),
+            phone: Joi.string().pattern(new RegExp("^[0-9]{10}$")),
+            cnic: Joi.string().pattern(new RegExp("^[0-9]{13}$")),
+            password: Joi.string().min(8),
+            role: Joi.string(),
+        });
+
+        // Validate the fields present in the request body
+        const { error } = schema.validate(fieldsToUpdate);
         if (error) return res.status(400).json({ message: error.details[0].message });
 
+        // Perform the partial update
         const updatedStaff = await Staff.findByIdAndUpdate(
             req.params.id,
-            req.body,
-            { new: true }
+            { $set: fieldsToUpdate },
+            { new: true, runValidators: true } // Ensures Mongoose validations are applied
         );
+
         if (!updatedStaff) return res.status(404).json({ message: "Staff not found!" });
 
-        res.status(200).json({ message: "Staff updated successfully!" });
+        res.status(200).json({
+            message: "Staff updated successfully!",
+            staff: updatedStaff,
+        });
     } catch (err) {
+        console.error("Error updating Staff:", err);
         res.status(500).json({ message: err.message });
     }
 };
+
 
 deleteStaff = async (req, res) => {
     try {

@@ -60,11 +60,13 @@ readFood = async (req, res) => {
 
 updateFood = async (req, res) => {
     try {
-        // Validate only the fields that are present in req.body
+        // Allowed fields for partial update
+        const allowedFields = ['name', 'type', 'price', 'quantity'];
+
+        // Extract fields from the request body
         const fieldsToUpdate = req.body;
-        const allowedFields = [ 'name', 'type', 'price', 'quantity' ]; // List of allowed fields for update
-        
-        // Validate if fields are allowed
+
+        // Validate if the provided fields are allowed
         const invalidFields = Object.keys(fieldsToUpdate).filter(
             field => !allowedFields.includes(field)
         );
@@ -72,20 +74,34 @@ updateFood = async (req, res) => {
             return res.status(400).json({ message: `Invalid fields: ${invalidFields.join(', ')}` });
         }
 
+        // Create a Joi schema for validation
+        const schema = Joi.object({
+            name: Joi.string().min(3),
+            type: Joi.string().valid("breakfast", "starter", "main", "deserts", "beverages"),
+            price: Joi.number(),
+            quantity: Joi.number(),
+        });
+
+        // Validate the fields that are being updated
+        const { error } = schema.validate(fieldsToUpdate);
+        if (error) return res.status(400).json({ message: error.details[0].message });
+
         // Perform the partial update
         const updatedFood = await Food.findByIdAndUpdate(
             req.params.id,
             { $set: fieldsToUpdate },
-            { new: true, runValidators: true } // `runValidators` ensures partial fields are validated
+            { new: true, runValidators: true } // Ensure field-level validation
         );
 
         if (!updatedFood) return res.status(404).json({ message: "Food not found!" });
 
         res.status(200).json({ message: "Food updated successfully!", data: updatedFood });
     } catch (err) {
+        console.error("Error updating Food:", err);
         res.status(500).json({ message: err.message });
     }
 };
+
 
 
 deleteFood = async (req, res) => {

@@ -146,17 +146,47 @@ readBooking = async (req, res) => {
 
 updateBooking = async (req, res) => {
     try {
-        const { error } = validateBooking(req.body);
-        if (error) return res.status(400).json({ message: error.details[0].message });
+        // Allowed fields for partial update
+        const allowedFields = [
+            'room',
+            'bookfor',
+            'bookedby',
+            'bookingtime',
+            'expectedcheckin',
+            'checkin',
+            'expectedcheckout',
+            'checkout',
+            'staytime',
+            'bill',
+        ];
 
-        const updatedBooking = await Booking.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        // Extract and validate fields from req.body
+        const fieldsToUpdate = req.body;
+
+        // Validate if the fields are allowed
+        const invalidFields = Object.keys(fieldsToUpdate).filter(
+            field => !allowedFields.includes(field)
+        );
+        if (invalidFields.length > 0) {
+            return res.status(400).json({ message: `Invalid fields: ${invalidFields.join(', ')}` });
+        }
+
+        // Perform the partial update
+        const updatedBooking = await Booking.findByIdAndUpdate(
+            req.params.id,
+            { $set: fieldsToUpdate },
+            { new: true, runValidators: true } // Ensure validation for fields being updated
+        );
+
         if (!updatedBooking) return res.status(404).json({ message: "Booking not found!" });
 
         res.status(200).json({ message: "Booking updated successfully!", booking: updatedBooking });
     } catch (err) {
+        console.error("Error updating Booking:", err);
         res.status(500).json({ message: err.message });
     }
 };
+
 
 deleteBooking = async (req, res) => {
     try {

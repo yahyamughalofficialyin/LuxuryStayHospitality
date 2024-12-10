@@ -62,23 +62,69 @@ readLaundryorder = async (req, res) => {
     }
 };
 
-updateLaundryorder = async (req, res) => {
+const updateLaundryorder = async (req, res) => {
     try {
-        const { error } = validateLaundryorder(req.body);
+        // Allowed fields for partial update
+        const allowedFields = [
+            "laundryid",
+            "quantity",
+            "bill",
+            "status",
+            "paymentstatus",
+            "room",
+            "ordertime",
+            "orderby",
+        ];
+
+        // Extract fields from the request body
+        const fieldsToUpdate = req.body;
+
+        // Validate if the provided fields are allowed
+        const invalidFields = Object.keys(fieldsToUpdate).filter(
+            (field) => !allowedFields.includes(field)
+        );
+        if (invalidFields.length > 0) {
+            return res
+                .status(400)
+                .json({ message: `Invalid fields: ${invalidFields.join(", ")}` });
+        }
+
+        // Create a Joi schema for validating only the provided fields
+        const schema = Joi.object({
+            laundryid: Joi.string(),
+            quantity: Joi.number(),
+            bill: Joi.number(),
+            status: Joi.string().valid("pending", "gettingwashed", "drying", "ready"),
+            paymentstatus: Joi.string().valid("paid", "unpaid"),
+            room: Joi.string(),
+            ordertime: Joi.date(),
+            orderby: Joi.string(),
+        });
+
+        // Validate the fields present in the request body
+        const { error } = schema.validate(fieldsToUpdate);
         if (error) return res.status(400).json({ message: error.details[0].message });
 
+        // Perform the partial update
         const updatedLaundryorder = await Laundryorder.findByIdAndUpdate(
             req.params.id,
-            req.body,
-            { new: true }
+            { $set: fieldsToUpdate },
+            { new: true, runValidators: true } // Ensures Mongoose validations are applied
         );
-        if (!updatedLaundryorder) return res.status(404).json({ message: "Order not found!" });
 
-        res.status(200).json({ message: "Order updated successfully!" });
+        if (!updatedLaundryorder)
+            return res.status(404).json({ message: "Order not found!" });
+
+        res.status(200).json({
+            message: "Order updated successfully!",
+            laundryorder: updatedLaundryorder,
+        });
     } catch (err) {
+        console.error("Error updating Laundry Order:", err);
         res.status(500).json({ message: err.message });
     }
 };
+
 
 deleteLaundryorder = async (req, res) => {
     try {

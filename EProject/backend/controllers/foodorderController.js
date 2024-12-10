@@ -81,19 +81,69 @@ const readFoodorder = async (req, res) => {
 // Update an Order
 const updateFoodorder = async (req, res) => {
     try {
-        const { error } = validateFoodorder(req.body);
+        // Allowed fields for partial update
+        const allowedFields = [
+            'foodid',
+            'quantity',
+            'bill',
+            'status',
+            'paymentstatus',
+            'type',
+            'ordertime',
+            'room',
+            'orderby',
+        ];
+
+        // Extract fields from the request body
+        const fieldsToUpdate = req.body;
+
+        // Validate if the provided fields are allowed
+        const invalidFields = Object.keys(fieldsToUpdate).filter(
+            (field) => !allowedFields.includes(field)
+        );
+        if (invalidFields.length > 0) {
+            return res
+                .status(400)
+                .json({ message: `Invalid fields: ${invalidFields.join(', ')}` });
+        }
+
+        // Create a Joi schema for validating only the provided fields
+        const schema = Joi.object({
+            foodid: Joi.string(),
+            quantity: Joi.number().min(1),
+            bill: Joi.number(),
+            status: Joi.string().valid('recieved', 'gettingready', 'ready', 'delivered'),
+            paymentstatus: Joi.string().valid('paid', 'unpaid'),
+            type: Joi.string().valid('takeaway', 'dinein', 'roomserve'),
+            ordertime: Joi.date(),
+            room: Joi.string(), // Optional field for "roomserve"
+            orderby: Joi.string(),
+        });
+
+        // Validate the fields present in the request body
+        const { error } = schema.validate(fieldsToUpdate);
         if (error) return res.status(400).json({ message: error.details[0].message });
 
-        const updatedFoodorder = await Foodorder.findByIdAndUpdate(req.params.id, req.body, {
-            new: true,
-        });
-        if (!updatedFoodorder) return res.status(404).json({ message: "Order not found!" });
+        // Perform the partial update
+        const updatedFoodorder = await Foodorder.findByIdAndUpdate(
+            req.params.id,
+            { $set: fieldsToUpdate },
+            { new: true, runValidators: true } // `runValidators` ensures the fields are validated
+        );
 
-        res.status(200).json({ message: "Order updated successfully!", order: updatedFoodorder });
+        if (!updatedFoodorder)
+            return res.status(404).json({ message: 'Order not found!' });
+
+        res.status(200).json({
+            message: 'Order updated successfully!',
+            order: updatedFoodorder,
+        });
     } catch (err) {
+        console.error('Error updating Foodorder:', err);
         res.status(500).json({ message: err.message });
     }
 };
+
 
 // Delete an Order
 const deleteFoodorder = async (req, res) => {
