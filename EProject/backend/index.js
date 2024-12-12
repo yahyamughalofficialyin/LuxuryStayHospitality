@@ -3,6 +3,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const connectDB = require("./config/db");
 const Joi = require("joi");
+const cors = require("cors");
 
 
 // Importing Models
@@ -35,6 +36,15 @@ const laundryorderController = require("./controllers/laundryorderController");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+const corsOptions = {
+    origin: 'http://localhost:3000', // Replace with your frontend's URL
+    methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allowed HTTP methods
+    allowedHeaders: ['Content-Type', 'Authorization'], // Allowed headers
+  };
+  
+  // Enable CORS for all routes
+  app.use(cors(corsOptions));
 
 // Middleware
 app.use(express.json());

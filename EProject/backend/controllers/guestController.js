@@ -6,7 +6,7 @@ const validateGuest = (data) => {
     const schema = Joi.object({
         name: Joi.string().required(),
         email: Joi.string().email().required(),
-        phone: Joi.string().pattern(new RegExp("^[0-9]{10}$")).required(),
+        phone: Joi.string().pattern(new RegExp("^[0-9]{11}$")).required(),
         documenttype: Joi.string().valid("passport", "cnic").required(),
         documentno: Joi.string()
             .when("documenttype", {
