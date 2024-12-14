@@ -14,7 +14,7 @@ const guestSchema = new mongoose.Schema({
     phone: {
         type: String,
         required: true,
-        match: /^[0-9]{10}$/,
+        match: /^[0-9]{11}$/,
     },
     documenttype: {
         type: String,
@@ -24,19 +24,25 @@ const guestSchema = new mongoose.Schema({
     documentno: {
         type: String,
         required: true,
-        validate: {
-            validator: function (value) {
-                if (this.documenttype === "passport") {
-                    return value.length >= 6 && value.length <= 10;
-                } else if (this.documenttype === "cnic") {
-                    return value.length === 13;
-                }
-                return false;
-            },
-            message: (props) =>
-                `${props.value} is not valid for the selected document type!`,
-        },
     },
+});
+
+// Pre-save hook to validate documentno based on documenttype
+guestSchema.pre("save", function (next) {
+    if (this.documenttype === "passport") {
+        if (this.documentno.length < 6 || this.documentno.length > 10) {
+            return next(
+                new Error("Document number must be between 6 to 10 characters for a passport.")
+            );
+        }
+    } else if (this.documenttype === "cnic") {
+        if (this.documentno.length !== 13) {
+            return next(
+                new Error("Document number must be exactly 13 characters for a CNIC.")
+            );
+        }
+    }
+    next();
 });
 
 module.exports = mongoose.model("Guest", guestSchema);
