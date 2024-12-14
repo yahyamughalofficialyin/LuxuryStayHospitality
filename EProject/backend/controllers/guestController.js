@@ -93,7 +93,7 @@ const updateGuest = async (req, res) => {
         const schema = Joi.object({
             name: Joi.string(),
             email: Joi.string().email(),
-            phone: Joi.string().pattern(new RegExp("^[0-9]{10}$")),
+            phone: Joi.string().pattern(new RegExp("^[0-9]{11}$")),
             documenttype: Joi.string().valid("passport", "cnic"),
             documentno: Joi.string().when("documenttype", {
                 is: "passport",

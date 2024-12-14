@@ -7,7 +7,7 @@ const validateStaff = (data) => {
     const schema = Joi.object({
         username: Joi.string().required(),
         email: Joi.string().email().required(),
-        phone: Joi.string().pattern(new RegExp("^[0-9]{10}$")).required(),
+        phone: Joi.string().pattern(new RegExp("^[0-9]{11}$")).required(),
         cnic: Joi.string().pattern(new RegExp("^[0-9]{13}$")).required(),
         password: Joi.string().min(8).required(),
         role: Joi.string().required(),
@@ -98,7 +98,7 @@ updateStaff = async (req, res) => {
         const schema = Joi.object({
             username: Joi.string(),
             email: Joi.string().email(),
-            phone: Joi.string().pattern(new RegExp("^[0-9]{10}$")),
+            phone: Joi.string().pattern(new RegExp("^[0-9]{11}$")),
             cnic: Joi.string().pattern(new RegExp("^[0-9]{13}$")),
             password: Joi.string().min(8),
             role: Joi.string(),
@@ -112,6 +112,20 @@ updateStaff = async (req, res) => {
         if (fieldsToUpdate.password) {
             const salt = await bcrypt.genSalt(10);
             fieldsToUpdate.password = await bcrypt.hash(fieldsToUpdate.password, salt);
+        }
+
+        // Check role limit if role is being updated
+        if (fieldsToUpdate.role) {
+            const roleStaffCount = await Staff.countDocuments({ role: fieldsToUpdate.role });
+            const roleData = await axios.get(`http://localhost:5000/api/role/${fieldsToUpdate.role}`);
+            
+            if (!roleData.data) {
+                return res.status(400).json({ message: "Invalid role ID!" });
+            }
+
+            if (roleStaffCount >= roleData.data.limit) {
+                return res.status(400).json({ message: "Limit Reached!! Can't Assign More Staff to this role" });
+            }
         }
 
         // Perform the partial update
@@ -132,6 +146,7 @@ updateStaff = async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 };
+
 
 
 deleteStaff = async (req, res) => {

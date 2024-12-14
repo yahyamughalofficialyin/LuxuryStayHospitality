@@ -19,6 +19,7 @@ const { Food } = require("./models/Food");
 const { Booking } = require("./models/Booking");
 const { FoodOrder } = require("./models/FoodOrder");
 const { LaundryOrder } = require("./models/Laundry");
+const { Feedback } = require("./models/Feedback");
 
 // Importing Controllers
 const adminController = require("./controllers/adminController");
@@ -33,6 +34,7 @@ const foodController = require("./controllers/foodController");
 const bookingController = require("./controllers/bookingController");
 const foodorderController = require("./controllers/foodorderController");
 const laundryorderController = require("./controllers/laundryorderController");
+const feedbackController = require("./controllers/feedbackController");
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -279,6 +281,8 @@ app.put("/api/laundryorder/update/:id", laundryorderController.updateLaundryorde
 
 // **5. DELETE - Delete Laundryorder by ID**
 app.delete("/api/laundryorder/delete/:id", laundryorderController.deleteLaundryorder);
+
+
 
 
 
