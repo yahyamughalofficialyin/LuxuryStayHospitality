@@ -284,6 +284,25 @@ app.delete("/api/laundryorder/delete/:id", laundryorderController.deleteLaundryo
 
 
 
+// **********************************************************FEEDBACK CRUD**********************************************************
+
+// **1. CREATE - Add Feedback**
+app.post("/api/feedback/create", feedbackController.createFeedback);
+
+// **2. READ - Get All Feedbacks**
+app.get("/api/feedback/", feedbackController.readallFeedback);
+
+// **3. READ - Get Feedback by ID**
+app.get("/api/feedback/:id", feedbackController.readFeedback);
+
+// **4. UPDATE - Update Feedback by ID**
+app.put("/api/feedback/update/:id", feedbackController.updateFeedback);
+
+// **5. DELETE - Delete Feedback by ID**
+app.delete("/api/feedback/delete/:id", feedbackController.deleteFeedback);
+
+
+
 
 
 // Start Server
