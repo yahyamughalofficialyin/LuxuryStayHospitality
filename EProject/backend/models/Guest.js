@@ -9,8 +9,9 @@ const guestSchema = new mongoose.Schema({
         type: String,
         required: true,
         unique: true,
-        match: /^\S+@\S+\.\S+$/,
+        match: /^[a-zA-Z][a-zA-Z0-9._%+-]*@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/,
     },
+    
     phone: {
         type: String,
         required: true,

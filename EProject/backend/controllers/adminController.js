@@ -1,5 +1,51 @@
 const Admin = require("../models/Admin");
 const Joi = require("joi");
+const bcrypt = require("bcrypt");
+
+// Login Admin
+const loginAdmin = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // Validate email and password
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email and password are required!" });
+    }
+
+    // Check if admin exists
+    const admin = await Admin.findOne({ email });
+    if (!admin) {
+      return res.status(404).json({ message: "Invalid email or password!" });
+    }
+
+    // Compare passwords
+    const isMatch = await bcrypt.compare(password, admin.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Invalid email or password!" });
+    }
+
+    // Save admin ID in session
+    req.session.adminId = admin._id;
+
+    res.status(200).json({
+      message: "Login successful!",
+      adminId: admin._id,
+    });
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+const logoutAdmin = (req, res) => {
+  req.session.destroy((err) => {
+    if (err) {
+      return res.status(500).json({ message: "Failed to logout." });
+    }
+    res.status(200).json({ message: "Logged out successfully." });
+  });
+};
+
+
 
 const validateAdmin = (data) => {
   const schema = Joi.object({
@@ -123,5 +169,7 @@ module.exports = {
   readallAdmin,
   readAdmin,
   updateAdmin,
-  deleteAdmin
+  deleteAdmin,
+  loginAdmin,
+  logoutAdmin
 };

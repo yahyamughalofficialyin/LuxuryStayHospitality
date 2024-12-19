@@ -4,6 +4,8 @@ const mongoose = require("mongoose");
 const connectDB = require("./config/db");
 const Joi = require("joi");
 const cors = require("cors");
+const session = require("express-session");
+
 
 
 // Importing Models
@@ -37,6 +39,16 @@ const laundryorderController = require("./controllers/laundryorderController");
 const feedbackController = require("./controllers/feedbackController");
 
 const app = express();
+
+app.use(
+  session({
+    secret: process.env.SESSIONCODE, // Use a more secure secret key
+    resave: false,
+    saveUninitialized: true,
+    cookie: { secure: false }, // Set to `true` in production with HTTPS
+  })
+);
+
 const PORT = process.env.PORT || 5000;
 
 const corsOptions = {
@@ -72,6 +84,9 @@ app.put("/api/admin/update/:id", adminController.updateAdmin);
 
 // **5. DELETE - Delete Admin by ID**
 app.delete("/api/admin/delete/:id", adminController.deleteAdmin);
+// **6. LOGIN - Admin Login**
+app.post("/api/admin/login", adminController.loginAdmin);
+
 
 
 
