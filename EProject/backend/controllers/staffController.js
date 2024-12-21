@@ -94,6 +94,11 @@ updateStaff = async (req, res) => {
                 .json({ message: `Invalid fields: ${invalidFields.join(", ")}` });
         }
 
+        // Ensure email is always stored in lowercase
+        if (fieldsToUpdate.email) {
+            fieldsToUpdate.email = fieldsToUpdate.email.toLowerCase();
+        }
+
         // Create a Joi schema for validating only the provided fields
         const schema = Joi.object({
             username: Joi.string(),
@@ -106,7 +111,9 @@ updateStaff = async (req, res) => {
 
         // Validate the fields present in the request body
         const { error } = schema.validate(fieldsToUpdate);
-        if (error) return res.status(400).json({ message: error.details[0].message });
+        if (error) {
+            return res.status(400).json({ message: error.details[0].message });
+        }
 
         // If password is present, hash it before saving
         if (fieldsToUpdate.password) {
@@ -114,17 +121,41 @@ updateStaff = async (req, res) => {
             fieldsToUpdate.password = await bcrypt.hash(fieldsToUpdate.password, salt);
         }
 
-        // Check role limit if role is being updated
-        if (fieldsToUpdate.role) {
-            const roleStaffCount = await Staff.countDocuments({ role: fieldsToUpdate.role });
-            const roleData = await axios.get(`http://localhost:5000/api/role/${fieldsToUpdate.role}`);
-            
-            if (!roleData.data) {
+        // Fetch current staff data
+        const currentStaff = await Staff.findById(req.params.id);
+        if (!currentStaff) {
+            return res.status(404).json({ message: "Staff not found!" });
+        }
+
+        // Check for unique email, phone, and CNIC
+        const uniqueFields = ["email", "phone", "cnic"];
+        for (const field of uniqueFields) {
+            if (fieldsToUpdate[field] && fieldsToUpdate[field] !== currentStaff[field]) {
+                const existingRecord = await Staff.findOne({ [field]: fieldsToUpdate[field] });
+                if (existingRecord) {
+                    return res.status(400).json({ message: `${field} already exists!` });
+                }
+            }
+        }
+
+        // Role limit check if role is being updated
+        if (fieldsToUpdate.role && fieldsToUpdate.role !== currentStaff.role) {
+            const roleDataResponse = await axios.get(`http://localhost:5000/api/role/${fieldsToUpdate.role}`);
+            if (!roleDataResponse.data) {
                 return res.status(400).json({ message: "Invalid role ID!" });
             }
 
-            if (roleStaffCount >= roleData.data.limit) {
-                return res.status(400).json({ message: "Limit Reached!! Can't Assign More Staff to this role" });
+            const roleData = roleDataResponse.data;
+
+            const roleStaffCount = await Staff.countDocuments({
+                role: fieldsToUpdate.role,
+                _id: { $ne: req.params.id }, // Exclude current staff
+            });
+
+            if (roleStaffCount >= roleData.limit) {
+                return res.status(400).json({
+                    message: `Limit Reached! Cannot assign more staff to the "${roleData.name}" role.`,
+                });
             }
         }
 
@@ -135,7 +166,9 @@ updateStaff = async (req, res) => {
             { new: true, runValidators: true } // Ensures Mongoose validations are applied
         );
 
-        if (!updatedStaff) return res.status(404).json({ message: "Staff not found!" });
+        if (!updatedStaff) {
+            return res.status(404).json({ message: "Staff not found!" });
+        }
 
         res.status(200).json({
             message: "Staff updated successfully!",
@@ -143,7 +176,7 @@ updateStaff = async (req, res) => {
         });
     } catch (err) {
         console.error("Error updating Staff:", err);
-        res.status(500).json({ message: err.message });
+        res.status(500).json({ message: "An error occurred while updating staff." });
     }
 };
 

@@ -2,16 +2,21 @@ const Laundryorder = require("../models/Laundryorder");
 const Joi = require("joi");
 const axios = require("axios")
 
-const validateLaundryorder = (data) => {
+const validateLaundryorder = (data, isUpdate = false) => {
+    // Define schema with optional fields for updates
     const schema = Joi.object({
-        laundryid: Joi.string().required(),
-        quantity: Joi.number().required(),
-        bill: Joi.number().required(),
-        status: Joi.string().valid("pending","gettingwashed", "drying", "ready").required(),
-        paymentstatus: Joi.string().valid("paid", "unpaid").required(),
-        room: Joi.string().required(),
-        ordertime: Joi.date().required(),
-        orderby: Joi.string().required(),
+        laundryid: isUpdate ? Joi.string().optional() : Joi.string().required(),
+        quantity: isUpdate ? Joi.number().optional() : Joi.number().required(),
+        bill: isUpdate ? Joi.number().optional() : Joi.number().required(),
+        status: isUpdate
+            ? Joi.string().valid("pending", "gettingwashed", "drying", "ready").optional()
+            : Joi.string().valid("pending", "gettingwashed", "drying", "ready").required(),
+        paymentstatus: isUpdate
+            ? Joi.string().valid("paid", "unpaid").optional()
+            : Joi.string().valid("paid", "unpaid").required(),
+        bookingid: isUpdate ? Joi.string().optional() : Joi.string().required(),
+        ordertime: isUpdate ? Joi.date().optional() : Joi.date().required(),
+        orderby: isUpdate ? Joi.string().optional() : Joi.string().required(),
     });
     return schema.validate(data);
 };
@@ -21,15 +26,16 @@ const createLaundryorder = async (req, res) => {
         const { error } = validateLaundryorder(req.body);
         if (error) return res.status(400).json({ message: error.details[0].message });
 
-        const { laundryid, quantity, status, paymentstatus, room, orderby } = req.body;
+        const { laundryid, quantity, status, paymentstatus, bookingid, orderby } = req.body;
 
-        // Check if the laundry item exists
-        const laundryResponse = await axios.get(`http://localhost:5000/api/laundry/${laundryid}`);
-        const laundry = laundryResponse.data;
-        if (!laundry) return res.status(404).json({ message: "Laundry item not found!" });
+        // Validate booking ID
+        const bookingResponse = await axios.get(`http://localhost:5000/api/booking/${bookingid}`);
+        if (!bookingResponse.data) {
+            return res.status(404).json({ message: "Booking not found or invalid!" });
+        }
 
         // Create the order
-        const newLaundryorder = new Laundryorder({ laundryid, quantity, status, paymentstatus, room, orderby });
+        const newLaundryorder = new Laundryorder({ laundryid, quantity, status, paymentstatus, room: bookingid, orderby });
         await newLaundryorder.save();
 
         res.status(201).json({ message: "Order placed successfully!" });
@@ -40,7 +46,6 @@ const createLaundryorder = async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 };
-
 
 
 readallLaundryorder = async (req, res) => {

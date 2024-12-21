@@ -70,24 +70,22 @@ readFloor = async (req, res) => {
 const updateFloor = async (req, res) => {
     try {
         // Allowed fields for update
-        const allowedFields = ['available', 'limit'];
+        const allowedFields = ["available", "limit"];
 
         // Extract and validate fields from req.body
         const fieldsToUpdate = req.body;
 
-        // Check for invalid fields
-        const invalidFields = Object.keys(fieldsToUpdate).filter(
-            field => !allowedFields.includes(field)
-        );
-        if (invalidFields.length > 0) {
-            return res.status(400).json({ message: `Only 'available' and 'limit' can be updated! Invalid fields: ${invalidFields.join(', ')}` });
+        // Check if no valid fields are provided
+        const providedFields = Object.keys(fieldsToUpdate).filter(field => allowedFields.includes(field));
+        if (providedFields.length === 0) {
+            return res.status(400).json({ message: "No valid fields to update. Only 'available' and 'limit' can be updated." });
         }
 
         // Validate fields using Joi
         const schema = Joi.object({
-            available: Joi.string().valid("yes", "no").required(),
-            limit: Joi.number().required(),
-        });
+            available: Joi.string().valid("yes", "no"),
+            limit: Joi.number(),
+        }).fork(providedFields, schema => schema.required());
 
         const { error } = schema.validate(fieldsToUpdate);
         if (error) return res.status(400).json({ message: error.details[0].message });
@@ -107,6 +105,7 @@ const updateFloor = async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 };
+
 
 
 deleteFloor = async (req, res) => {
