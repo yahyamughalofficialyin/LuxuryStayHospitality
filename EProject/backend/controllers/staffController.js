@@ -15,6 +15,41 @@ const validateStaff = (data) => {
     return schema.validate(data);
 };
 
+// Login Staff
+const loginStaff = async (req, res) => {
+    try {
+      const { email, password } = req.body;
+  
+      // Validate email and password
+      if (!email || !password) {
+        return res.status(400).json({ message: "Email and password are required!" });
+      }
+  
+      // Check if staff exists
+      const staff = await Staff.findOne({ email });
+      if (!staff) {
+        return res.status(404).json({ message: "Invalid email or password!" });
+      }
+  
+      // Compare passwords
+      const isMatch = await bcrypt.compare(password, staff.password);
+      if (!isMatch) {
+        return res.status(401).json({ message: "Invalid email or password!" });
+      }
+  
+      // Save staff ID in session
+      req.session.staffId = staff._id;
+  
+      res.status(200).json({
+        message: "Login successful!",
+        staffId: staff._id,
+      });
+    } catch (err) {
+      res.status(500).json({ message: err.message });
+    }
+  };
+  
+
 // Create Staff
 createStaff = async (req, res) => {
     try {
@@ -197,5 +232,6 @@ module.exports = {
     readallStaff,
     readStaff,
     updateStaff,
-    deleteStaff
+    deleteStaff,
+    loginStaff
 }

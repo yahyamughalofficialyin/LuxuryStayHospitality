@@ -84,6 +84,7 @@ app.put("/api/admin/update/:id", adminController.updateAdmin);
 
 // **5. DELETE - Delete Admin by ID**
 app.delete("/api/admin/delete/:id", adminController.deleteAdmin);
+
 // **6. LOGIN - Admin Login**
 app.post("/api/admin/login", adminController.loginAdmin);
 
@@ -106,6 +107,9 @@ app.put("/api/staff/update/:id", staffController.updateStaff);
 
 // **5. DELETE - Delete Staff by ID**
 app.delete("/api/staff/delete/:id", staffController.deleteStaff);
+
+// **6. LOGIN - Admin Login**
+app.post("/api/staff/login", staffController.loginStaff);
 
 
 

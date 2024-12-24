@@ -45,15 +45,9 @@ createRoom = async (req, res) => {
             // First room on the floor
             newRoomNo = parseInt(`${floorNumber}01`);
         } else {
-            const expectedRoomNo = parseInt(lastRoomNo) + 1;
-            newRoomNo = expectedRoomNo;
+            newRoomNo = parseInt(lastRoomNo) + 1;
 
-            // Prevent skipping sequence
-            if (req.body.roomno && req.body.roomno !== expectedRoomNo) {
-                return res.status(400).json({
-                    message: `Invalid Room Number! The next room number should be ${expectedRoomNo}.`,
-                });
-            }
+            // Prevent skipping sequence (No longer needed as user input is ignored)
         }
 
         // Enforce floor limit
@@ -76,7 +70,7 @@ createRoom = async (req, res) => {
             available,
             status,
             floor,
-            roomno: newRoomNo,
+            roomno: newRoomNo, // Auto-generated room number
         });
         await newRoom.save();
 
@@ -86,6 +80,7 @@ createRoom = async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 };
+
 
 // Other CRUD functions remain the same (readallRoom, readRoom, updateRoom, deleteRoom)
 readallRoom = async (req, res) => {
@@ -109,11 +104,18 @@ readRoom = async (req, res) => {
 
 updateRoom = async (req, res) => {
     try {
-        // Allowed fields for partial update
+        // Allowed fields for partial update (roomno not included)
         const allowedFields = ["type", "available", "status", "floor"];
 
         // Extract fields from the request body
         const fieldsToUpdate = req.body;
+
+        // Check if roomno is being updated
+        if (fieldsToUpdate.roomno !== undefined) {
+            return res.status(400).json({
+                message: "Room number cannot be updated.",
+            });
+        }
 
         // Validate if the provided fields are allowed
         const invalidFields = Object.keys(fieldsToUpdate).filter(
@@ -165,15 +167,38 @@ updateRoom = async (req, res) => {
 };
 
 
+
 deleteRoom = async (req, res) => {
     try {
-        const room = await Room.findByIdAndDelete(req.params.id);
-        if (!room) return res.status(404).json({ message: "Room not found!" });
+        // Find the room to be deleted
+        const room = await Room.findById(req.params.id);
+        if (!room) {
+            return res.status(404).json({ message: "Room not found!" });
+        }
+
+        // Fetch all rooms on the same floor
+        const roomsOnFloor = await Room.find({ floor: room.floor }).sort({ roomno: 1 });
+
+        // Find the room with the highest roomno on the floor
+        const lastRoom = roomsOnFloor[roomsOnFloor.length - 1];
+
+        // Ensure only the last room can be deleted
+        if (lastRoom._id.toString() !== room._id.toString()) {
+            return res.status(400).json({
+                message: "Only the last room on the floor can be deleted.",
+            });
+        }
+
+        // Delete the room
+        await Room.findByIdAndDelete(req.params.id);
         res.status(200).json({ message: "Room deleted successfully!" });
     } catch (err) {
+        console.error("Error deleting Room:", err);
         res.status(500).json({ message: err.message });
     }
 };
+
+
 
 
 module.exports = {
