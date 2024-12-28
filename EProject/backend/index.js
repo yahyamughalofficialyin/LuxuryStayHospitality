@@ -6,8 +6,6 @@ const Joi = require("joi");
 const cors = require("cors");
 const session = require("express-session");
 
-
-
 // Importing Models
 const { Admin } = require("./models/Admin");
 const { Staff } = require("./models/Staff");
@@ -45,20 +43,19 @@ app.use(
     secret: process.env.SESSIONCODE, // Use a more secure secret key
     resave: false,
     saveUninitialized: true,
-    cookie: { secure: false }, // Set to `true` in production with HTTPS
+    cookie: { secure: true } // Set to `true` in production with HTTPS
   })
 );
 
 const PORT = process.env.PORT || 5000;
 
 const corsOptions = {
-    origin: 'http://localhost:3000', // Replace with your frontend's URL
-    methods: ['GET', 'POST', 'PUT', 'DELETE'], // Allowed HTTP methods
-    allowedHeaders: ['Content-Type', 'Authorization'], // Allowed headers
-  };
-  
-  // Enable CORS for all routes
-  app.use(cors(corsOptions));
+  origin: "http://localhost:3000", // Allow this origin
+  credentials: true // Allow cookies and credentials
+};
+
+// Enable CORS for all routes
+app.use(cors(corsOptions));
 
 // Middleware
 app.use(express.json());
@@ -66,9 +63,7 @@ app.use(express.json());
 // Connect to MongoDB Atlas
 connectDB();
 
-
-
-// **********************************************************ADMIN CRUD AND LOGIN**********************************************************
+// **********************************************************ADMIN CRUD WITH LOGIN AND LOGOUT**********************************************************
 
 // **1. CREATE - Add Admin**
 app.post("/api/admin/create", adminController.createAdmin);
@@ -88,8 +83,8 @@ app.delete("/api/admin/delete/:id", adminController.deleteAdmin);
 // **6. LOGIN - Admin Login**
 app.post("/api/admin/login", adminController.loginAdmin);
 
-
-
+// **7. LOGIN - Admin Logout**
+app.post("/api/admin/logout", adminController.logoutAdmin);
 
 // **********************************************************STAFF CRUD AND LOGIN**********************************************************
 
@@ -111,8 +106,6 @@ app.delete("/api/staff/delete/:id", staffController.deleteStaff);
 // **6. LOGIN - Admin Login**
 app.post("/api/staff/login", staffController.loginStaff);
 
-
-
 // **********************************************************GUEST CRUD**********************************************************
 
 // **1. CREATE - Add Guest**
@@ -129,8 +122,6 @@ app.put("/api/guest/update/:id", guestController.updateGuest);
 
 // **5. DELETE - Delete Guest by ID**
 app.delete("/api/guest/delete/:id", guestController.deleteGuest);
-
-
 
 // **********************************************************ROLE CRUD**********************************************************
 
@@ -149,8 +140,6 @@ app.put("/api/role/update/:id", roleController.updateRole);
 // **5. DELETE - Delete Role by ID**
 app.delete("/api/role/delete/:id", roleController.deleteRole);
 
-
-
 // **********************************************************LAUNDRY CRUD**********************************************************
 
 // **1. CREATE - Add laundry**
@@ -167,8 +156,6 @@ app.put("/api/laundry/update/:id", laundryController.updateLaundry);
 
 // **5. DELETE - Delete Laundry by ID**
 app.delete("/api/laundry/delete/:id", laundryController.deleteLaundry);
-
-
 
 // **********************************************************ROOM TYPE CRUD**********************************************************
 
@@ -187,8 +174,6 @@ app.put("/api/roomtype/update/:id", roomtypeController.updateRoomtype);
 // **5. DELETE - Delete Roomtype by ID**
 app.delete("/api/roomtype/delete/:id", roomtypeController.deleteRoomtype);
 
-
-
 // **********************************************************FLOOR CRUD**********************************************************
 
 // **1. CREATE - Add Floor**
@@ -205,8 +190,6 @@ app.put("/api/floor/update/:id", floorController.updateFloor);
 
 // **5. DELETE - Delete Floor by ID**
 app.delete("/api/floor/delete/:id", floorController.deleteFloor);
-
-
 
 // **********************************************************ROOM CRUD**********************************************************
 
@@ -225,8 +208,6 @@ app.put("/api/room/update/:id", roomController.updateRoom);
 // **5. DELETE - Delete Room by ID**
 app.delete("/api/room/delete/:id", roomController.deleteRoom);
 
-
-
 // **********************************************************FOOD CRUD**********************************************************
 
 // **1. CREATE - Add Food**
@@ -243,8 +224,6 @@ app.put("/api/food/update/:id", foodController.updateFood);
 
 // **5. DELETE - Delete Food by ID**
 app.delete("/api/food/delete/:id", foodController.deleteFood);
-
-
 
 // **********************************************************BOOKING CRUD**********************************************************
 
@@ -263,8 +242,6 @@ app.put("/api/booking/update/:id", bookingController.updateBooking);
 // **5. DELETE - Delete Booking by ID**
 app.delete("/api/booking/delete/:id", bookingController.deleteBooking);
 
-
-
 // **********************************************************FOOD ORDER CRUD**********************************************************
 
 // **1. CREATE - Add Foodorder**
@@ -282,8 +259,6 @@ app.put("/api/foodorder/update/:id", foodorderController.updateFoodorder);
 // **5. DELETE - Delete Foodorder by ID**
 app.delete("/api/foodorder/delete/:id", foodorderController.deleteFoodorder);
 
-
-
 // **********************************************************Laundry Service CRUD**********************************************************
 
 // **1. CREATE - Add Laundryorder**
@@ -296,12 +271,16 @@ app.get("/api/laundryorder/", laundryorderController.readallLaundryorder);
 app.get("/api/laundryorder/:id", laundryorderController.readLaundryorder);
 
 // **4. UPDATE - Update Laundryorder by ID**
-app.put("/api/laundryorder/update/:id", laundryorderController.updateLaundryorder);
+app.put(
+  "/api/laundryorder/update/:id",
+  laundryorderController.updateLaundryorder
+);
 
 // **5. DELETE - Delete Laundryorder by ID**
-app.delete("/api/laundryorder/delete/:id", laundryorderController.deleteLaundryorder);
-
-
+app.delete(
+  "/api/laundryorder/delete/:id",
+  laundryorderController.deleteLaundryorder
+);
 
 // **********************************************************FEEDBACK CRUD**********************************************************
 
@@ -319,10 +298,6 @@ app.put("/api/feedback/update/:id", feedbackController.updateFeedback);
 
 // **5. DELETE - Delete Feedback by ID**
 app.delete("/api/feedback/delete/:id", feedbackController.deleteFeedback);
-
-
-
-
 
 // Start Server
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

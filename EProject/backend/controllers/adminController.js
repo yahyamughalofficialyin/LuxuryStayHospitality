@@ -7,34 +7,47 @@ const loginAdmin = async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    // Check if admin is already logged in
+    if (req.session.adminId) {
+      console.log("Admin is already logged in!");
+      return res.status(400).json({ message: "Admin is already logged in!" });
+    }
+
     // Validate email and password
     if (!email || !password) {
+      console.log("Email and password are required!");
       return res.status(400).json({ message: "Email and password are required!" });
     }
 
     // Check if admin exists
     const admin = await Admin.findOne({ email });
     if (!admin) {
+      console.log("Invalid email or password!");
       return res.status(404).json({ message: "Invalid email or password!" });
     }
 
     // Compare passwords
     const isMatch = await bcrypt.compare(password, admin.password);
     if (!isMatch) {
+      console.log("Invalid email or password!");
       return res.status(401).json({ message: "Invalid email or password!" });
     }
 
     // Save admin ID in session
     req.session.adminId = admin._id;
+    console.log(`Admin ID set in session: ${req.session.adminId}`);
 
     res.status(200).json({
       message: "Login successful!",
       adminId: admin._id,
     });
+    console.log(req.session); // Log the session object
   } catch (err) {
+    console.error(err);
     res.status(500).json({ message: err.message });
   }
 };
+
 
 const logoutAdmin = (req, res) => {
   req.session.destroy((err) => {
