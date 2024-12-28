@@ -1,5 +1,6 @@
+// App.jsx
 import React from "react";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
 import Home from "./Pages/Home";
 import Adminread from "./Pages/Adminread";
 import Sidebar from "./Components/Sidebar";
@@ -15,7 +16,9 @@ import LaundryRead from "./Pages/Laundryread";
 import Feedbackread from "./Pages/Feedbackread";
 import Login from "./Pages/Login";
 import Bookingroom from "./Pages/Bookingroom";
+import Booking from "./Pages/booking";
 import Logout from "./Pages/Logout";
+import Notfound from "./Pages/Notfound";
 
 function App() {
   return (
@@ -27,6 +30,7 @@ function App() {
 
 function AppWithSidebarNavbar() {
   const location = useLocation();
+  const isLoggedIn = !!sessionStorage.getItem("adminId"); // Check if admin is logged in
 
   return (
     <main className="main" id="top">
@@ -38,11 +42,7 @@ function AppWithSidebarNavbar() {
           </>
         )}
         <div className="content">
-        {location.pathname !== "/login" && (
-          <>
             <Navbar />
-          </>
-        )}
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/Admin" element={<Adminread />} />
@@ -56,10 +56,14 @@ function AppWithSidebarNavbar() {
             <Route path="/Laundry" element={<LaundryRead />} />
             <Route path="/Feedback" element={<Feedbackread />} />
             <Route path="/bookingroom" element={<Bookingroom />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/logout" element={Logout} />
+            <Route path="/Bookings" element={<Booking />} ></Route>
+            <Route path="*" element={<Notfound />} /> {/* Catch-all route for 404 */}
+            <Route 
+              path="/login" 
+              element={isLoggedIn ? <Navigate to="/" replace /> : <Login />} 
+            />
+            <Route path="/logout" element={<Logout />} />
 
-            
           </Routes>
         </div>
       </div>

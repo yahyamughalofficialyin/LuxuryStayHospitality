@@ -10,23 +10,23 @@ const Login = () => {
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
-  e.preventDefault();
-  try {
-    const response = await axios.post('http://localhost:5000/api/admin/login', { email, password }, { withCredentials: true });
-    if (response.status === 200) {
-      const adminId = response.data.adminId;
-      console.log(`Logged in Admin ID: ${adminId}`); // Print admin ID to the console
-      toast.success('Login successful!'); // Show success toast
-      navigate('/'); // Navigate to the home route
+    e.preventDefault();
+    try {
+      const response = await axios.post('http://localhost:5000/api/admin/login', { email, password }, { withCredentials: true });
+      if (response.status === 200) {
+        const adminId = response.data.adminId;
+        sessionStorage.setItem("adminId", adminId); // Store adminId in sessionStorage
+        toast.success('Login successful!');
+        navigate('/'); // Navigate to the home route
+      }
+    } catch (error) {
+      if (error.response) {
+        toast.error(error.response.data.message || 'Login failed. Please try again.');
+      } else {
+        toast.error('An error occurred. Please try again.');
+      }
     }
-  } catch (error) {
-    if (error.response) {
-      toast.error(error.response.data.message || 'Login failed. Please try again.');
-    } else {
-      toast.error('An error occurred. Please try again.');
-    }
-  }
-};
+  };
 
   return (
     <main className="main" id="top">

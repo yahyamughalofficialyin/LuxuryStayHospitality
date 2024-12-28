@@ -34,8 +34,8 @@ const loginAdmin = async (req, res) => {
     }
 
     // Save admin ID in session
-    req.session.adminId = admin._id;
-    console.log(`Admin ID set in session: ${req.session.adminId}`);
+    req.session.adminId = admin._id; // Save admin ID in the session
+    await req.session.save(); // Ensure session is saved
 
     res.status(200).json({
       message: "Login successful!",

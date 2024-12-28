@@ -35,8 +35,9 @@ const Navbar = () => {
   
       const data = await response.json();
       if (response.ok) {
-        sessionStorage.clear(); // Clear sessionStorage
         alert(data.message); // Show success message
+        sessionStorage.clear(); // Clear sessionStorage
+       
         navigate("/login"); // Redirect to login page
       } else {
         alert(data.message); // Show error message
