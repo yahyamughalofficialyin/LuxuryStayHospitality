@@ -149,6 +149,12 @@ const updateAdmin = async (req, res) => {
       }
     }
 
+    // If password is being updated, hash it
+    if (fieldsToUpdate.password) {
+      const salt = await bcrypt.genSalt(10); // Generate salt for hashing
+      fieldsToUpdate.password = await bcrypt.hash(fieldsToUpdate.password, salt); // Hash the new password
+    }
+
     // Update the admin
     const updatedAdmin = await Admin.findByIdAndUpdate(
       req.params.id,
@@ -166,6 +172,7 @@ const updateAdmin = async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 };
+
 
 deleteAdmin = async (req, res) => {
   try {

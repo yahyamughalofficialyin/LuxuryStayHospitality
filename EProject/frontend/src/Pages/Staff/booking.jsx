@@ -1,11 +1,15 @@
 import React, { useEffect, useState } from "react";
+import Select from "react-select";
 
 const Booking = () => {
   const [rooms, setRooms] = useState([]);
   const [roomTypes, setRoomTypes] = useState([]);
+  const [guests, setGuests] = useState([]);
+  const [selectedGuest, setSelectedGuest] = useState(null);
   const [selectedRoom, setSelectedRoom] = useState(null);
-  const [bookFor, setBookFor] = useState("");
-  const [bookedBy, setBookedBy] = useState("");
+  const [filterStatus, setFilterStatus] = useState("all"); // Filter state
+  const [searchTerm, setSearchTerm] = useState(""); // Search term state
+  const bookedBy = sessionStorage.getItem("staffId");
   const [expectedCheckin, setExpectedCheckin] = useState("");
   const [expectedCheckout, setExpectedCheckout] = useState("");
   const [message, setMessage] = useState("");
@@ -22,35 +26,52 @@ const Booking = () => {
       .then((res) => res.json())
       .then((data) => setRoomTypes(data))
       .catch((err) => console.error(err));
+
+    // Fetch Guests data
+    fetch("http://localhost:5000/api/guest")
+      .then((res) => res.json())
+      .then((data) => setGuests(data))
+      .catch((err) => console.error(err));
   }, []);
 
   const handleBookNow = () => {
-    if (!selectedRoom || !bookFor || !bookedBy || !expectedCheckin || !expectedCheckout) {
+    if (
+      !selectedRoom ||
+      !selectedGuest ||
+      !expectedCheckin ||
+      !expectedCheckout
+    ) {
       setMessage("All fields are required!");
       return;
     }
 
     const bookingData = {
-      room: selectedRoom,
-      bookfor: bookFor,
-      bookedby: bookedBy,
+      room: selectedRoom, // This should be the room ID
+      bookfor: selectedGuest.value, // Corrected to match the server's expected field
+      bookedby: bookedBy, // Assuming bookedBy is correctly set from sessionStorage
       expectedcheckin: expectedCheckin,
-      expectedcheckout: expectedCheckout,
+      expectedcheckout: expectedCheckout
     };
 
-    fetch("http://localhost:5000/api/booking", {
+    fetch("http://localhost:5000/api/booking/create", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(bookingData),
+      body: JSON.stringify(bookingData)
     })
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) {
+          return res.json().then((data) => {
+            throw new Error(data.message || "An error occurred while booking.");
+          });
+        }
+        return res.json();
+      })
       .then((data) => {
-        if (data.message) setMessage(data.message);
-        else setMessage("Booking successful!");
+        setMessage(data.message || "Booking successful!");
       })
       .catch((err) => {
         console.error(err);
-        setMessage("An error occurred while booking.");
+        setMessage(err.message);
       });
   };
 
@@ -62,12 +83,30 @@ const Booking = () => {
         ...room,
         roomType: roomType ? roomType.type : "Unknown",
         halfDayPrice: roomType ? roomType.halfdayprice : 0,
-        fullDayPrice: roomType ? roomType.fulldayprice : 0,
+        fullDayPrice: roomType ? roomType.fulldayprice : 0
       };
     });
 
+    // Filter by status
+    const filteredRooms =
+      filterStatus === "all"
+        ? combinedRooms
+        : combinedRooms.filter((room) => room.status === filterStatus);
+
+    // Filter by search term
+    const searchedRooms = filteredRooms.filter((room) => {
+      const roomTypeMatch = room.roomType
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase());
+      const roomNoMatch = room.roomno
+        .toString()
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase());
+      return roomTypeMatch || roomNoMatch;
+    });
+
     // Sort by availability status and then by room number
-    return combinedRooms.sort((a, b) => {
+    return searchedRooms.sort((a, b) => {
       const statusOrder = { available: 1, cleaning: 2, occupied: 3 };
       const statusComparison =
         (statusOrder[a.status] || 4) - (statusOrder[b.status] || 4);
@@ -79,10 +118,48 @@ const Booking = () => {
 
   const roomDetails = getRoomDetails();
 
+  // Transform guests into the format that React-Select expects
+  const guestOptions = guests.map((guest) => ({
+    value: guest._id, // Save guest's ID
+    label: guest.email // Show guest's email
+  }));
+
   return (
     <div className="container mt-4">
-      <h1 className="text-center mb-4">Room Booking</h1>
-      {message && <div className="alert alert-info">{message}</div>}
+      <h1 className="text-center mb-4">Book Room</h1>
+
+      {/* Filters and Search */}
+      <div className="row mb-4">
+        <div className="col-md-6">
+          <label htmlFor="statusFilter" className="form-label">
+            Filter by Status
+          </label>
+          <select
+            id="statusFilter"
+            className="form-select"
+            value={filterStatus}
+            onChange={(e) => setFilterStatus(e.target.value)}
+          >
+            <option value="all" className="form-control">All</option>
+            <option value="available" className="form-control">Available</option>
+            <option value="cleaning" className="form-control">Cleaning</option>
+            <option value="occupied" className="form-control">Occupied</option>
+          </select>
+        </div>
+        <div className="col-md-6">
+          <label htmlFor="searchRooms" className="form-label">
+            Search Rooms
+          </label>
+          <input
+            type="text"
+            id="searchRooms"
+            className="form-control"
+            placeholder="Search by room type or number"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+      </div>
 
       <div className="row">
         {roomDetails.map((room) => (
@@ -101,8 +178,8 @@ const Booking = () => {
                     </span>
                   )}
                   {room.status === "cleaning" && (
-                    <span className="badge rounded-pill bg-warning position-absolute mt-2 me-2 z-2 top-0 end-0">
-                      Cleaning
+                    <span className="badge rounded-pill bg-warning position-absolute mt-2 me-2 z-2 top-0 end-0" title="Cleaning" >
+                      <i class='bx bxs-washer' ></i>
                     </span>
                   )}
                   {room.status === "available" && (
@@ -120,15 +197,25 @@ const Booking = () => {
                   <p className="fs-10 mb-1">
                     Half Day: <strong>${room.halfDayPrice}</strong>
                   </p>
-                  <button
-                        className="btn btn-sm btn-falcon-default"
+                  {room.status === "available" && (
+                    <button
+                    className="btn btn-sm btn-falcon-default"
                     disabled={room.status !== "available"}
                     data-bs-toggle="modal"
                     data-bs-target="#bookingModal"
                     onClick={() => setSelectedRoom(room._id)}
                   >
-                    <span className='fas fa-hotel'></span>
+                    <span className="fas fa-hotel"></span>
                   </button>
+                  )}
+                  {room.status === "occupied" && (
+                    <button
+                    className="btn btn-sm btn-falcon-default"
+                    title="Check In"
+                  >
+                    <span className="bx bx-run"></span>
+                  </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -158,31 +245,23 @@ const Booking = () => {
               ></button>
             </div>
             <div className="modal-body">
+              {message && <div className="alert alert-info">{message}</div>}
               <form>
+                {/* Guest Selection Dropdown */}
                 <div className="mb-3">
                   <label htmlFor="bookFor" className="form-label">
-                    Guest ID
+                    Select Guest
                   </label>
-                  <input
-                    type="text"
-                    className="form-control"
+                  <Select
                     id="bookFor"
-                    value={bookFor}
-                    onChange={(e) => setBookFor(e.target.value)}
+                    options={guestOptions}
+                    onChange={setSelectedGuest}
+                    value={selectedGuest}
+                    placeholder="Search and select guest"
                   />
                 </div>
-                <div className="mb-3">
-                  <label htmlFor="bookedBy" className="form-label">
-                    Staff ID
-                  </label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    id="bookedBy"
-                    value={bookedBy}
-                    onChange={(e) => setBookedBy(e.target.value)}
-                  />
-                </div>
+
+                {/* Expected Check-in */}
                 <div className="mb-3">
                   <label htmlFor="expectedCheckin" className="form-label">
                     Expected Check-in
@@ -195,6 +274,8 @@ const Booking = () => {
                     onChange={(e) => setExpectedCheckin(e.target.value)}
                   />
                 </div>
+
+                {/* Expected Check-out */}
                 <div className="mb-3">
                   <label htmlFor="expectedCheckout" className="form-label">
                     Expected Check-out
@@ -207,6 +288,8 @@ const Booking = () => {
                     onChange={(e) => setExpectedCheckout(e.target.value)}
                   />
                 </div>
+
+                {/* Book Now Button */}
                 <button
                   type="button"
                   className="btn btn-success"

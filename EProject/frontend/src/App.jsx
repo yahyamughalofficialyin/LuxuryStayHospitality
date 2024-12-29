@@ -16,6 +16,7 @@ import Feedbackread from "./Pages/Feedbackread";
 import Login from "./Pages/Login";
 import Bookingroom from "./Pages/Bookingroom";
 import Booking from "./Pages/Staff/booking";
+import Bookings from "./Pages/Staff/Bookings";
 import Logout from "./Pages/Logout";
 import Notfound from "./Pages/Notfound";
 import StaffLogin from "./Pages/Staff/Login";
@@ -72,7 +73,8 @@ function AppWithSidebarNavbar() {
             <Route path="/Laundry" element={<PrivateRoute element={<LaundryRead />} />} />
             <Route path="/Feedback" element={<PrivateRoute element={<Feedbackread />} />} />
             <Route path="/bookingroom" element={<PrivateRoute element={<Bookingroom />} />} />
-            <Route path="/Staff/Bookings" element={<PrivateRoute element={<Booking />} />} />
+            <Route path="/Staff/BookRoom" element={<PrivateRoute element={<Booking />} />} />
+            <Route path="/Staff/Bookings" element={<PrivateRoute element={<Bookings/>} />} />
             <Route path="/logout" element={<PrivateRoute element={<Logout />} />} />
 
             {/* Login Routes */}
