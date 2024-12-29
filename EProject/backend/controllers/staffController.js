@@ -47,8 +47,19 @@ const loginStaff = async (req, res) => {
     } catch (err) {
       res.status(500).json({ message: err.message });
     }
+};
+
+// Logout Staff
+
+const logoutStaff = (req, res) => {
+    req.session.destroy((err) => {
+      if (err) {
+        return res.status(500).json({ message: "Failed to logout." });
+      }
+      res.status(200).json({ message: "Logged out successfully." });
+    });
   };
-  
+
 
 // Create Staff
 createStaff = async (req, res) => {
@@ -233,5 +244,6 @@ module.exports = {
     readStaff,
     updateStaff,
     deleteStaff,
-    loginStaff
+    loginStaff,
+    logoutStaff,
 }

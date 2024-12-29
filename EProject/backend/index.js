@@ -86,7 +86,7 @@ app.post("/api/admin/login", adminController.loginAdmin);
 // **7. LOGIN - Admin Logout**
 app.post("/api/admin/logout", adminController.logoutAdmin);
 
-// **********************************************************STAFF CRUD AND LOGIN**********************************************************
+// **********************************************************STAFF CRUD WITH LOGIN AND LOGOUT**********************************************************
 
 // **1. CREATE - Add Staff**
 app.post("/api/staff/create", staffController.createStaff);
@@ -105,6 +105,9 @@ app.delete("/api/staff/delete/:id", staffController.deleteStaff);
 
 // **6. LOGIN - Admin Login**
 app.post("/api/staff/login", staffController.loginStaff);
+
+// **6. LOGOUT - Admin LOGOUT**
+app.post("/api/staff/logout", staffController.logoutStaff);
 
 // **********************************************************GUEST CRUD**********************************************************
 
