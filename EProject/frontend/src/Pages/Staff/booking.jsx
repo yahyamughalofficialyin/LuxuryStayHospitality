@@ -47,10 +47,11 @@ const Booking = () => {
 
     const bookingData = {
       room: selectedRoom, // This should be the room ID
-      bookfor: selectedGuest.value, // Corrected to match the server's expected field
-      bookedby: bookedBy, // Assuming bookedBy is correctly set from sessionStorage
+      bookfor: selectedGuest.value, // Guest ID
+      bookedby: bookedBy, // Staff ID from sessionStorage
       expectedcheckin: expectedCheckin,
-      expectedcheckout: expectedCheckout
+      expectedcheckout: expectedCheckout,
+      paymentstatus: "unpaid" // Default payment status
     };
 
     fetch("http://localhost:5000/api/booking/create", {
@@ -140,10 +141,18 @@ const Booking = () => {
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
           >
-            <option value="all" className="form-control">All</option>
-            <option value="available" className="form-control">Available</option>
-            <option value="cleaning" className="form-control">Cleaning</option>
-            <option value="occupied" className="form-control">Occupied</option>
+            <option value="all" className="form-control">
+              All
+            </option>
+            <option value="available" className="form-control">
+              Available
+            </option>
+            <option value="cleaning" className="form-control">
+              Cleaning
+            </option>
+            <option value="occupied" className="form-control">
+              Occupied
+            </option>
           </select>
         </div>
         <div className="col-md-6">
@@ -178,8 +187,11 @@ const Booking = () => {
                     </span>
                   )}
                   {room.status === "cleaning" && (
-                    <span className="badge rounded-pill bg-warning position-absolute mt-2 me-2 z-2 top-0 end-0" title="Cleaning" >
-                      <i class='bx bxs-washer' ></i>
+                    <span
+                      className="badge rounded-pill bg-warning position-absolute mt-2 me-2 z-2 top-0 end-0"
+                      title="Cleaning"
+                    >
+                      <i class="bx bxs-washer"></i>
                     </span>
                   )}
                   {room.status === "available" && (
@@ -199,22 +211,22 @@ const Booking = () => {
                   </p>
                   {room.status === "available" && (
                     <button
-                    className="btn btn-sm btn-falcon-default"
-                    disabled={room.status !== "available"}
-                    data-bs-toggle="modal"
-                    data-bs-target="#bookingModal"
-                    onClick={() => setSelectedRoom(room._id)}
-                  >
-                    <span className="fas fa-hotel"></span>
-                  </button>
+                      className="btn btn-sm btn-falcon-default"
+                      disabled={room.status !== "available"}
+                      data-bs-toggle="modal"
+                      data-bs-target="#bookingModal"
+                      onClick={() => setSelectedRoom(room._id)}
+                    >
+                      <span className="fas fa-hotel"></span>
+                    </button>
                   )}
                   {room.status === "occupied" && (
                     <button
-                    className="btn btn-sm btn-falcon-default"
-                    title="Check In"
-                  >
-                    <span className="bx bx-run"></span>
-                  </button>
+                      className="btn btn-sm btn-falcon-default"
+                      title="Check In"
+                    >
+                      <span className="bx bx-run"></span>
+                    </button>
                   )}
                 </div>
               </div>

@@ -48,16 +48,18 @@ const foodorderSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         default: null,
         validate: {
-            validator: async function (value) {
-                if (this.type !== "roomserve") return true;
-                try {
-                    const response = await axios.get(`http://localhost:5000/api/room/${value}`);
-                    return response.data?.available === "no";
-                } catch {
+            validator: function (value) {
+                // If the type is "roomserve", room ID must be provided
+                if (this.type === "roomserve" && !value) {
                     return false;
                 }
+                // If the type is "dinein" or "takeaway", room ID should not be provided
+                if ((this.type === "dinein" || this.type === "takeaway") && value) {
+                    return false;
+                }
+                return true;
             },
-            message: "Invalid Room ID or Room not booked.",
+            message: "Room ID is required for room service orders and must not be provided for dine-in or takeaway.",
         },
     },
     orderby: {

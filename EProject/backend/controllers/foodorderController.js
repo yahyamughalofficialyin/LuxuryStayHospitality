@@ -12,11 +12,16 @@ const validateFoodorder = (data) => {
         paymentstatus: Joi.string().valid("paid", "unpaid").required(),
         type: Joi.string().valid("takeaway", "dinein", "roomserve").required(),
         ordertime: Joi.date().optional(), // Will be auto-assigned
-        room: Joi.string().optional(), // Required only for "roomserve" type
+        room: Joi.string().optional().when('type', {
+            is: 'roomserve',
+            then: Joi.required(),  // Room is required only if type is "roomserve"
+            otherwise: Joi.forbidden(),  // Room should not be provided for "dinein" or "takeaway"
+        }),
         orderby: Joi.string().required(),
     });
     return schema.validate(data);
 };
+
 
 // Create a Food Order
 const createFoodorder = async (req, res) => {

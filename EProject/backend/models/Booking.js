@@ -76,6 +76,11 @@ const bookingSchema = new mongoose.Schema({
   bill: {
     type: Number,
   },
+  paymentstatus: {
+    type: String,
+    enum: ['paid', 'unpaid'],
+    default: 'unpaid',
+  },
 });
 
 module.exports = mongoose.model("Booking", bookingSchema);

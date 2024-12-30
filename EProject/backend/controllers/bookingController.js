@@ -77,15 +77,10 @@ const createBooking = async (req, res) => {
             expectedcheckout: expectedCheckoutParsed,
             staytime: stayDuration,
             bill,
+            paymentstatus: "unpaid", // Default to unpaid
         });
 
         await newBooking.save();
-
-        // Update room status
-        await axios.put(`http://localhost:5000/api/room/update/${room}`, {
-            available: "no",
-            status: "occupied",
-        });
 
         res.status(201).json({ message: "Booking created successfully!", booking: newBooking });
     } catch (err) {
@@ -124,6 +119,11 @@ const updateBooking = async (req, res) => {
 
         const booking = await Booking.findById(req.params.id);
         if (!booking) return res.status(404).json({ message: "Booking not found!" });
+
+        // Validate paymentstatus (if being updated)
+        if (updates.paymentstatus && !['paid', 'unpaid'].includes(updates.paymentstatus)) {
+            return res.status(400).json({ message: "Invalid payment status." });
+        }
 
         // Validate room (if being updated)
         if (updates.room) {
@@ -183,6 +183,21 @@ const updateBooking = async (req, res) => {
             updates.bill = await calculateBill(updates.room || booking.room, stayDuration);
         }
 
+        // If checkin is updated to not null, update the room status to "occupied"
+        if (updates.checkin !== undefined && updates.checkin !== null) {
+            await axios.put(`http://localhost:5000/api/room/update/${booking.room}`, {
+                available: "no",
+                status: "occupied",
+            });
+        }
+
+        // If checkout is updated, update the room status to "cleaning"
+        if (updates.checkout !== undefined) {
+            await axios.put(`http://localhost:5000/api/room/update/${booking.room}`, {
+                status: "cleaning",
+            });
+        }
+
         const updatedBooking = await Booking.findByIdAndUpdate(req.params.id, { $set: updates }, { new: true, runValidators: true });
         if (!updatedBooking) return res.status(404).json({ message: "Booking not found!" });
 
@@ -192,6 +207,7 @@ const updateBooking = async (req, res) => {
         res.status(500).json({ message: err.message });
     }
 };
+
 
 
 
