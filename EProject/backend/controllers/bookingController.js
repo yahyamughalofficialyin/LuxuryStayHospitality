@@ -113,6 +113,20 @@ readBooking = async (req, res) => {
     }
 };
 
+
+// Read Orders by Guest (bookfor field)
+const readbookforguest = async (req, res) => {
+    try {
+        const bookfor = await Booking.find({ bookfor: req.params.bookfor });
+        if (bookfor.length === 0) {
+            return res.status(404).json({ message: "No orders found for this guest!" });
+        }
+        res.status(200).json(bookfor);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
 const updateBooking = async (req, res) => {
     try {
         const updates = req.body; // Declare updates and assign request body
@@ -225,6 +239,7 @@ module.exports = {
     createBooking,
     readallBooking,
     readBooking,
+    readbookforguest,
     updateBooking,
     deleteBooking,
 };

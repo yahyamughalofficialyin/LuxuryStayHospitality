@@ -239,6 +239,9 @@ app.get("/api/booking/", bookingController.readallBooking);
 // **3. READ - Get Booking by ID**
 app.get("/api/booking/:id", bookingController.readBooking);
 
+// **3. READ - Get Booking by Guest**
+app.get("/api/booking/guest/:bookfor", bookingController.readbookforguest);
+
 // **4. UPDATE - Update Booking by ID**
 app.put("/api/booking/update/:id", bookingController.updateBooking);
 
@@ -255,6 +258,9 @@ app.get("/api/foodorder/", foodorderController.readallFoodorder);
 
 // **3. READ - Get Foodorder by ID**
 app.get("/api/foodorder/:id", foodorderController.readFoodorder);
+
+// **3. READ - Get Foodorder by Guest**
+app.get("/api/foodorder/guest/:orderby", foodorderController.readFoodorderbyguest);
 
 // **4. UPDATE - Update Foodorder by ID**
 app.put("/api/foodorder/update/:id", foodorderController.updateFoodorder);
@@ -273,11 +279,11 @@ app.get("/api/laundryorder/", laundryorderController.readallLaundryorder);
 // **3. READ - Get Laundryorder by ID**
 app.get("/api/laundryorder/:id", laundryorderController.readLaundryorder);
 
+// **3. READ - Get Laundry by Guest**
+app.get("/api/laundryorder/guest/:orderby", laundryorderController.readLaundryorderbyguest);
+
 // **4. UPDATE - Update Laundryorder by ID**
-app.put(
-  "/api/laundryorder/update/:id",
-  laundryorderController.updateLaundryorder
-);
+app.put("/api/laundryorder/update/:id",laundryorderController.updateLaundryorder);
 
 // **5. DELETE - Delete Laundryorder by ID**
 app.delete(

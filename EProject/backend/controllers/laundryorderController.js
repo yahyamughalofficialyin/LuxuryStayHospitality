@@ -67,6 +67,19 @@ readLaundryorder = async (req, res) => {
     }
 };
 
+// Read Orders by Guest (orderby field)
+const readLaundryorderbyguest = async (req, res) => {
+    try {
+        const laundryorders = await Laundryorder.find({ orderby: req.params.orderby });
+        if (laundryorders.length === 0) {
+            return res.status(404).json({ message: "No orders found for this guest!" });
+        }
+        res.status(200).json(laundryorders);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
 const updateLaundryorder = async (req, res) => {
     try {
         // Allowed fields for partial update
@@ -145,6 +158,7 @@ module.exports = {
     createLaundryorder,
     readallLaundryorder,
     readLaundryorder,
+    readLaundryorderbyguest,
     updateLaundryorder,
     deleteLaundryorder
 }

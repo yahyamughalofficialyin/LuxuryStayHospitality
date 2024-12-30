@@ -83,6 +83,20 @@ const readFoodorder = async (req, res) => {
     }
 };
 
+
+// Read Orders by Guest (orderby field)
+const readFoodorderbyguest = async (req, res) => {
+    try {
+        const foodorders = await Foodorder.find({ orderby: req.params.orderby });
+        if (foodorders.length === 0) {
+            return res.status(404).json({ message: "No orders found for this guest!" });
+        }
+        res.status(200).json(foodorders);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+};
+
 // Update an Order
 const updateFoodorder = async (req, res) => {
     try {
@@ -167,4 +181,5 @@ module.exports = {
     readFoodorder,
     updateFoodorder,
     deleteFoodorder,
+    readFoodorderbyguest,
 };

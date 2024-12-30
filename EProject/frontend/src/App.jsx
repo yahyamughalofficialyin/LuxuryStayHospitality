@@ -21,6 +21,8 @@ import Logout from "./Pages/Logout";
 import Notfound from "./Pages/Notfound";
 import StaffLogin from "./Pages/Staff/Login";
 import FoodOrder from "./Pages/Staff/FoodOrder";
+import Invoice from "./Pages/Staff/Invoice";
+import Guest from "./Pages/Staff/Guests";
 
 function App() {
   return (
@@ -77,6 +79,8 @@ function AppWithSidebarNavbar() {
             <Route path="/Staff/BookRoom" element={<PrivateRoute element={<Booking />} />} />
             <Route path="/Staff/Bookings" element={<PrivateRoute element={<Bookings/>} />} />
             <Route path="/Staff/FoodOrder" element={<PrivateRoute element={<FoodOrder/>} />} />
+            <Route path="/Staff/Guests" element={<PrivateRoute element={<Guest/>} />} />
+            <Route path="/Staff/Invoice/:id" element={<PrivateRoute element={<Invoice/>} />} />
             <Route path="/logout" element={<PrivateRoute element={<Logout />} />} />
 
             {/* Login Routes */}
