@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
 const Invoice = () => {
   const { id } = useParams();
@@ -72,6 +74,23 @@ const Invoice = () => {
       .catch((err) => console.error("Error updating payment status:", err));
   };
 
+  const handleDownloadPDF = () => {
+    const element = document.getElementById("invoice");
+    if (!element) {
+      console.error("Invoice element not found.");
+      return;
+    }
+    html2canvas(element, { useCORS: true })
+      .then((canvas) => {
+        const imgData = canvas.toDataURL("image/png");
+        const pdf = new jsPDF("p", "mm", "a4");
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+        pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+        pdf.save("invoice.pdf");
+      })
+      .catch((err) => console.error("Error generating PDF:", err));
+  };
   useEffect(() => {
     // Set current date in desired format
     const today = new Date();
@@ -153,6 +172,7 @@ const Invoice = () => {
               <button
                 className="btn btn-falcon-default btn-sm me-1 mb-2 mb-sm-0"
                 type="button"
+                onClick={handleDownloadPDF}
               >
                 <span className="fas fa-arrow-down me-1"> </span>Download (.pdf)
               </button>
@@ -173,7 +193,7 @@ const Invoice = () => {
           </div>
         </div>
       </div>
-      <div className="card">
+      <div className="card" id="invoice" >
         <div className="card-body">
           <div className="row align-items-center text-center mb-3">
             <div className="col-sm-6 text-sm-start">

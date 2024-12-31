@@ -34,36 +34,22 @@ function App() {
   );
 }
 
-function PrivateRoute({ element, allowedRoles }) {
+function PrivateRoute({ element }) {
   const adminId = sessionStorage.getItem("adminId");
   const staffId = sessionStorage.getItem("staffId");
-  const [role, setRole] = useState(null);
   const location = useLocation();
 
-  useEffect(() => {
-    if (staffId) {
-      // Fetch staff role
-      fetch(`http://localhost:5000/api/staff/${staffId}`)
-        .then((response) => response.json())
-        .then((staffData) =>
-          fetch(`http://localhost:5000/api/role/${staffData.role}`)
-            .then((response) => response.json())
-            .then((roleData) => setRole(roleData.name))
-        )
-        .catch((error) => console.error("Error fetching role data:", error));
-    }
-  }, [staffId]);
+  // Redirect admin away from staff panel routes
+  if (location.pathname.startsWith("/Staff/") && adminId) {
+    return <Navigate to="/" replace />;
+  }
 
   // Staff panel access logic
   if (location.pathname.startsWith("/Staff/")) {
     if (staffId) {
-      if (allowedRoles.includes(role)) {
-        return element; // Allow access if role is permitted
-      } else {
-        return <Navigate to="*" replace />; // Redirect to Notfound page if role is not allowed
-      }
+      return element;
     } else {
-      return <Navigate to="/Staff/login" replace />; // Redirect to login if staff is not logged in
+      return <Navigate to="/Staff/login" replace />;
     }
   }
 
@@ -71,7 +57,7 @@ function PrivateRoute({ element, allowedRoles }) {
   if (adminId) {
     return element;
   } else {
-    return <Navigate to="/login" replace />; // Redirect to admin login page if admin is not logged in
+    return <Navigate to="/login" replace />;
   }
 }
 
@@ -83,61 +69,40 @@ function AppWithSidebarNavbar() {
   return (
     <main className="main" id="top">
       <div className="container" data-layout="container">
-        {/* Show Sidebar for all pages except login pages */}
-        {location.pathname !== "/login" && location.pathname !== "/staff/login" && (
-          <Sidebar />
-        )}
+        {location.pathname !== "/login" && location.pathname !== "/staff/login" && <Sidebar />}
         <div className="content">
-          {/* Show Navbar for all pages except login pages */}
-          {location.pathname !== "/login" && location.pathname !== "/staff/login" && (
-            <Navbar />
-          )}
+          {location.pathname !== "/login" && location.pathname !== "/staff/login" && <Navbar />}
           <Routes>
-            {/* Admin and Staff Private Routes */}
-            <Route path="/" element={<PrivateRoute element={<Home />} allowedRoles={["admin"]} />} />
-            <Route path="/Admin" element={<PrivateRoute element={<Adminread />} allowedRoles={["admin"]} />} />
-            <Route path="/Role" element={<PrivateRoute element={<Roleread />} allowedRoles={["admin"]} />} />
-            <Route path="/Employee" element={<PrivateRoute element={<Staffread />} allowedRoles={["admin"]} />} />
-            <Route path="/Guest" element={<PrivateRoute element={<Guestread />} allowedRoles={["admin"]} />} />
-            <Route path="/Roomtype" element={<PrivateRoute element={<Roomtype />} allowedRoles={["admin"]} />} />
-            <Route path="/Room" element={<PrivateRoute element={<Roomread />} allowedRoles={["admin"]} />} />
-            <Route path="/Floor" element={<PrivateRoute element={<Floorread />} allowedRoles={["admin"]} />} />
-            <Route path="/Food" element={<PrivateRoute element={<Foodread />} allowedRoles={["admin"]} />} />
-            <Route path="/Laundry" element={<PrivateRoute element={<LaundryRead />} allowedRoles={["admin"]} />} />
-            <Route path="/Feedback" element={<PrivateRoute element={<Feedbackread />} allowedRoles={["admin"]} />} />
-            <Route path="/bookingroom" element={<PrivateRoute element={<Bookingroom />} allowedRoles={["admin"]} />} />
-            <Route path="/Staff/" element={<PrivateRoute element={<Booking />} allowedRoles={["receptionist"]} />} />
-            <Route path="/Staff/Bookings" element={<PrivateRoute element={<Bookings />} allowedRoles={["receptionist"]} />} />
-            <Route path="/Staff/FoodOrder" element={<PrivateRoute element={<FoodOrder />} allowedRoles={["receptionist"]} />} />
-            <Route path="/Staff/Guests" element={<PrivateRoute element={<Guest />} allowedRoles={["receptionist"]} />} />
-            <Route path="/Staff/Invoice/:id" element={<PrivateRoute element={<Invoice />} allowedRoles={["receptionist"]} />} />
-            <Route path="Staff/Housekeeping/" element={<PrivateRoute element={<CleaningRooms />} allowedRoles={["housekeeping"]} />} />
-            <Route path="/Staff/Manager/Analytics" element={<PrivateRoute element={<Analytics />} allowedRoles={["manager"]} />} />
-            <Route path="/logout" element={<PrivateRoute element={<Logout />} allowedRoles={["admin", "manager", "receptionist", "housekeeping"]} />} />
+            <Route path="/" element={<PrivateRoute element={<Home />} />} />
+            <Route path="/Admin" element={<PrivateRoute element={<Adminread />} />} />
+            <Route path="/Role" element={<PrivateRoute element={<Roleread />} />} />
+            <Route path="/Employee" element={<PrivateRoute element={<Staffread />} />} />
+            <Route path="/Guest" element={<PrivateRoute element={<Guestread />} />} />
+            <Route path="/Roomtype" element={<PrivateRoute element={<Roomtype />} />} />
+            <Route path="/Room" element={<PrivateRoute element={<Roomread />} />} />
+            <Route path="/Floor" element={<PrivateRoute element={<Floorread />} />} />
+            <Route path="/Food" element={<PrivateRoute element={<Foodread />} />} />
+            <Route path="/Laundry" element={<PrivateRoute element={<LaundryRead />} />} />
+            <Route path="/Feedback" element={<PrivateRoute element={<Feedbackread />} />} />
+            <Route path="/bookingroom" element={<PrivateRoute element={<Bookingroom />} />} />
+            <Route path="/Staff/" element={<PrivateRoute element={<Booking />} />} />
+            <Route path="/Staff/Bookings" element={<PrivateRoute element={<Bookings />} />} />
+            <Route path="/Staff/FoodOrder" element={<PrivateRoute element={<FoodOrder />} />} />
+            <Route path="/Staff/Guests" element={<PrivateRoute element={<Guest />} />} />
+            <Route path="/Staff/Invoice/:id" element={<PrivateRoute element={<Invoice />} />} />
+            <Route path="/Staff/Housekeeping/" element={<PrivateRoute element={<CleaningRooms />} />} />
+            <Route path="/Staff/Manager/Analytics" element={<PrivateRoute element={<Analytics />} />} />
+            <Route path="/logout" element={<PrivateRoute element={<Logout />} />} />
 
-            {/* Login Routes */}
             <Route
               path="/login"
-              element={
-                adminId ? (
-                  <Navigate to="/" replace />
-                ) : (
-                  <Login />
-                )
-              }
+              element={adminId ? <Navigate to="/" replace /> : <Login />}
             />
             <Route
               path="/staff/login"
-              element={
-                staffId ? (
-                  <Navigate to="/Staff/" replace />
-                ) : (
-                  <StaffLogin />
-                )
-              }
+              element={staffId ? <Navigate to="/Staff/" replace /> : <StaffLogin />}
             />
 
-            {/* Catch-all for unknown routes */}
             <Route path="*" element={<Notfound />} />
           </Routes>
         </div>
