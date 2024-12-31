@@ -69,11 +69,10 @@ const Navbar = () => {
           <div className="d-flex align-items-center">
             <img
               className="me-2"
-              src="./assets/img/icons/spot-illustrations/falcon.png"
+              src="./assets/img/hotel.svg"
               alt=""
-              width={40}
+              width={100}
             />
-            <span className="font-sans-serif text-primary">falcon</span>
           </div>
         </Link>
         <ul className="navbar-nav navbar-nav-icons ms-auto flex-row align-items-center">
@@ -143,19 +142,7 @@ const Navbar = () => {
               </div>
             </div>
           </li>
-          <li className="nav-item d-none d-sm-block">
-            <Link
-              className="nav-link px-0 notification-indicator notification-indicator-warning notification-indicator-fill fa-icon-wait"
-              to="app/e-commerce/shopping-cart.html"
-            >
-              <span
-                className="fas fa-shopping-cart"
-                data-fa-transform="shrink-7"
-                style={{ fontSize: 33 }}
-              />
-              <span className="notification-indicator-number">1</span>
-            </Link>
-          </li>
+          
           <li className="nav-item dropdown">
             <Link
               className="nav-link notification-indicator notification-indicator-primary px-0 fa-icon-wait"

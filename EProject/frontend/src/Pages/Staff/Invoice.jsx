@@ -17,8 +17,59 @@ const Invoice = () => {
       day % 10 >= 1 && day % 10 <= 3 && ![11, 12, 13].includes(day % 100)
         ? suffixes[day % 10]
         : suffixes[0];
-    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    return `${day}${daySuffix} ${monthNames[date.getMonth()]} ${date.getFullYear()}`;
+    const monthNames = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec"
+    ];
+    return `${day}${daySuffix} ${
+      monthNames[date.getMonth()]
+    } ${date.getFullYear()}`;
+  };
+
+  const handlePayment = () => {
+    // Update booking payment status
+    const updateBookingStatus = unpaidBookings.map((booking) =>
+      fetch(`http://localhost:5000/api/booking/update/${booking._id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ paymentstatus: "paid" })
+      }).catch((err) =>
+        console.error("Error updating booking payment status:", err)
+      )
+    );
+
+    // Update food order payment status
+    const updateFoodOrderStatus = foodOrders.map((order) =>
+      fetch(`http://localhost:5000/api/foodorder/update/${order._id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ paymentstatus: "paid" })
+      }).catch((err) =>
+        console.error("Error updating food order payment status:", err)
+      )
+    );
+
+    // Wait for all requests to complete
+    Promise.all([...updateBookingStatus, ...updateFoodOrderStatus])
+      .then(() => {
+        alert("Payment status updated successfully!");
+        // Optionally, you can reload or update the state to reflect the changes
+      })
+      .catch((err) => console.error("Error updating payment status:", err));
   };
 
   useEffect(() => {
@@ -35,7 +86,9 @@ const Invoice = () => {
     fetch(`http://localhost:5000/api/booking/guest/${id}`)
       .then((res) => res.json())
       .then((bookings) => {
-        const unpaid = bookings.filter((booking) => booking.paymentstatus === "unpaid");
+        const unpaid = bookings.filter(
+          (booking) => booking.paymentstatus === "unpaid"
+        );
         setUnpaidBookings(unpaid);
 
         // Fetch room details for unpaid bookings
@@ -44,7 +97,9 @@ const Invoice = () => {
           roomIds.map((roomId) =>
             fetch(`http://localhost:5000/api/room/${roomId}`)
               .then((res) => res.json())
-              .catch((err) => console.error("Error fetching room details:", err))
+              .catch((err) =>
+                console.error("Error fetching room details:", err)
+              )
           )
         ).then((roomsData) => {
           const roomMap = {};
@@ -60,7 +115,9 @@ const Invoice = () => {
     fetch(`http://localhost:5000/api/foodorder/guest/${id}`)
       .then((res) => res.json())
       .then((orders) => {
-        const unpaidOrders = orders.filter((order) => order.paymentstatus === "unpaid");
+        const unpaidOrders = orders.filter(
+          (order) => order.paymentstatus === "unpaid"
+        );
         setFoodOrders(unpaidOrders);
 
         // Fetch food details based on foodid
@@ -69,7 +126,9 @@ const Invoice = () => {
           foodIds.map((foodId) =>
             fetch(`http://localhost:5000/api/food/${foodId}`)
               .then((res) => res.json())
-              .catch((err) => console.error("Error fetching food details:", err))
+              .catch((err) =>
+                console.error("Error fetching food details:", err)
+              )
           )
         ).then((foodData) => {
           const foodMap = {};
@@ -91,13 +150,23 @@ const Invoice = () => {
               <h5 className="mb-2 mb-md-0">Order Summary for Guest</h5>
             </div>
             <div className="col-auto">
-              <button className="btn btn-falcon-default btn-sm me-1 mb-2 mb-sm-0" type="button">
+              <button
+                className="btn btn-falcon-default btn-sm me-1 mb-2 mb-sm-0"
+                type="button"
+              >
                 <span className="fas fa-arrow-down me-1"> </span>Download (.pdf)
               </button>
-              <button className="btn btn-falcon-default btn-sm me-1 mb-2 mb-sm-0" type="button">
+              <button
+                className="btn btn-falcon-default btn-sm me-1 mb-2 mb-sm-0"
+                type="button"
+              >
                 <span className="fas fa-print me-1"> </span>Print
               </button>
-              <button className="btn btn-falcon-success btn-sm mb-2 mb-sm-0" type="button">
+              <button
+                className="btn btn-falcon-success btn-sm mb-2 mb-sm-0"
+                type="button"
+                onClick={handlePayment}
+              >
                 <span className="fas fa-dollar-sign me-1"></span>Receive Payment
               </button>
             </div>
@@ -128,9 +197,13 @@ const Invoice = () => {
               <h6 className="text-500">Invoice to</h6>
               <h5>{guestDetails.name || "Guest Name"}</h5>
               <p className="fs-10">
-                <a href={`mailto:${guestDetails.email}`}>{guestDetails.email || "guest@mail.com"}</a>
+                <a href={`mailto:${guestDetails.email}`}>
+                  {guestDetails.email || "guest@mail.com"}
+                </a>
                 <br />
-                <a href={`tel:${guestDetails.phone}`}>{guestDetails.phone || "021123456789"}</a>
+                <a href={`tel:${guestDetails.phone}`}>
+                  {guestDetails.phone || "021123456789"}
+                </a>
               </p>
             </div>
             <div className="col-sm-auto ms-auto">
@@ -150,7 +223,9 @@ const Invoice = () => {
                       <td>{currentDate}</td>
                     </tr>
                     <tr className="alert alert-warning fw-bold">
-                      <th className="text-warning-emphasis text-sm-end">Status:</th>
+                      <th className="text-warning-emphasis text-sm-end">
+                        Status:
+                      </th>
                       <td className="text-warning-emphasis">Unpaid</td>
                     </tr>
                   </tbody>
@@ -172,10 +247,16 @@ const Invoice = () => {
                 {unpaidBookings.map((booking) => (
                   <tr key={booking._id}>
                     <td className="align-middle">
-                      <h6 className="mb-0 text-nowrap">Room {rooms[booking.room] || "N/A"}</h6>
+                      <h6 className="mb-0 text-nowrap">
+                        Room {rooms[booking.room] || "N/A"}
+                      </h6>
                     </td>
-                    <td className="align-middle text-center">{booking.staytime}</td>
-                    <td className="align-middle text-end">${booking.bill / 2 || "N/A"}</td>
+                    <td className="align-middle text-center">
+                      {booking.staytime}
+                    </td>
+                    <td className="align-middle text-end">
+                      ${booking.bill / 2 || "N/A"}
+                    </td>
                     <td className="align-middle text-end">${booking.bill}</td>
                   </tr>
                 ))}
@@ -198,10 +279,16 @@ const Invoice = () => {
                   return (
                     <tr key={order._id}>
                       <td className="align-middle">
-                        <h6 className="mb-0 text-nowrap">{food?.name || "N/A"}</h6>
+                        <h6 className="mb-0 text-nowrap">
+                          {food?.name || "N/A"}
+                        </h6>
                       </td>
-                      <td className="align-middle text-center">{order.quantity}</td>
-                      <td className="align-middle text-end">${food?.price || "N/A"}</td>
+                      <td className="align-middle text-center">
+                        {order.quantity}
+                      </td>
+                      <td className="align-middle text-end">
+                        ${food?.price || "N/A"}
+                      </td>
                       <td className="align-middle text-end">${order.bill}</td>
                     </tr>
                   );
@@ -217,8 +304,14 @@ const Invoice = () => {
                   <th className="text-900">Total:</th>
                   <td className="fw-semi-bold">
                     $
-                    {unpaidBookings.reduce((total, booking) => total + booking.bill, 0) +
-                      foodOrders.reduce((total, order) => total + order.bill, 0)}
+                    {unpaidBookings.reduce(
+                      (total, booking) => total + booking.bill,
+                      0
+                    ) +
+                      foodOrders.reduce(
+                        (total, order) => total + order.bill,
+                        0
+                      )}
                   </td>
                 </tr>
               </table>
@@ -228,7 +321,9 @@ const Invoice = () => {
         <div className="card-footer bg-body-tertiary">
           <p className="fs-10 mb-0">
             Designed and Developed By{" "}
-            <Link to="http://www.shaheencodecrafters.com/">Shaheen Code Crafters</Link>
+            <Link to="http://www.shaheencodecrafters.com/">
+              Shaheen Code Crafters
+            </Link>
           </p>
         </div>
       </div>

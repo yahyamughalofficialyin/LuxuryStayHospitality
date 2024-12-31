@@ -17,7 +17,7 @@ const StaffLogin = () => {
         const staffId = response.data.staffId;
         sessionStorage.setItem("staffId", staffId); // Store staffId in sessionStorage
         toast.success('Login successful!');
-        navigate('/'); // Navigate to the home route
+        navigate('/Staff/'); // Navigate to the home route
       }
     } catch (error) {
       if (error.response) {

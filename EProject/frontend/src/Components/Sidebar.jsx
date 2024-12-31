@@ -1,7 +1,41 @@
-import React from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useEffect } from "react";
+import { Link, useLocation } from "react-router-dom";
 
 const Sidebar = () => {
+  const location = useLocation();
+  const staffId = sessionStorage.getItem("staffId"); // Example: fetching staffId from sessionStorage
+  const [roleName, setRoleName] = useState(null);
+
+  useEffect(() => {
+    const fetchRole = async () => {
+      if (!staffId) return;
+
+      try {
+        // Fetch staff details
+        const staffResponse = await fetch(
+          `http://localhost:5000/api/staff/${staffId}`
+        );
+        const staffData = await staffResponse.json();
+        const roleId = staffData.role;
+
+        // Fetch role details
+        const roleResponse = await fetch(
+          `http://localhost:5000/api/role/${roleId}`
+        );
+        const roleData = await roleResponse.json();
+
+        // Update role name
+        setRoleName(roleData.name);
+      } catch (error) {
+        console.error("Error fetching role details:", error);
+      }
+    };
+
+    fetchRole();
+  }, [staffId]);
+
+  // Check if the current URL contains '/Staff/' and the session has 'staffId'
+  const isStaff = location.pathname.includes("/Staff/") && staffId;
   return (
     <>
       <nav className="navbar navbar-light navbar-vertical navbar-expand-xl">
@@ -22,131 +56,124 @@ const Sidebar = () => {
             <div className="d-flex align-items-center py-3">
               <img
                 className="me-2"
-                src="./assets/img/icons/spot-illustrations/falcon.png"
+                src="./assets/img/hotel.svg"
                 alt=""
-                width={40}
+                width={150}
               />
-              <span className="font-sans-serif text-primary">falcon</span>
             </div>
           </Link>
         </div>
         <div className="collapse navbar-collapse" id="navbarVerticalCollapse">
           <div className="navbar-vertical-content scrollbar">
-            <ul className="navbar-nav flex-column mb-3" id="navbarVerticalNav">
-              <li className="nav-item">
-                {/* parent pages*/}
-                <Link
-                  className="nav-link dropdown-indicator"
-                  to="#dashboard"
-                  role="button"
-                  data-bs-toggle="collapse"
-                  aria-expanded="true"
-                  aria-controls="dashboard"
-                >
-                  <div className="d-flex align-items-center">
-                    <span className="nav-link-icon">
-                      <span className="fas fa-chart-pie" />
-                    </span>
-                    <span className="nav-link-text ps-1">Dashboard</span>
-                  </div>
-                </Link>
-                <ul className="nav collapse show" id="dashboard">
-                  <li className="nav-item">
-                    {/* label*/}
-                    <div className="row navbar-vertical-label-wrapper mt-3 mb-2">
-                      <div className="col-auto navbar-vertical-label">
-                        Pages
-                      </div>
-                      <div className="col ps-0">
-                        <hr className="mb-0 navbar-vertical-divider" />
-                      </div>
+            {roleName === "housekeeping" ? (
+              <ul
+                className="navbar-nav flex-column mb-3"
+                id="navbarVerticalNav"
+              >
+                <li className="nav-item">
+                  {/* label */}
+                  <div className="row navbar-vertical-label-wrapper mt-3 mb-2">
+                    <div className="col-auto navbar-vertical-label">Pages</div>
+                    <div className="col ps-0">
+                      <hr className="mb-0 navbar-vertical-divider" />
                     </div>
-                    {/* parent pages*/}
-                    <Link className="nav-link" to="/Admin" role="button">
-                      <div className="d-flex align-items-center">
-                        <span className="nav-link-icon">
-                          <span className="fas fa-user" />
-                        </span>
-                        <span className="nav-link-text ps-1">Admin</span>
-                      </div>
-                    </Link>
-                    {/* parent pages*/}
-                    <Link className="nav-link" to="/Staff" role="button">
-                      <div className="d-flex align-items-center">
-                        <span className="nav-link-icon">
-                          <span className="fas fa-users" />
-                        </span>
-                        <span className="nav-link-text ps-1">Staff</span>
-                      </div>
-                    </Link>
-                    {/* parent pages*/}
-                    <Link className="nav-link" to="/Guest" role="button">
-                      <div className="d-flex align-items-center">
-                        <span className="nav-link-icon">
-                          <span className="fas fa-user-circle" />
-                        </span>
-                        <span className="nav-link-text ps-1">Guest</span>
-                      </div>
-                    </Link>
-                    {/* parent pages*/}
-                    <Link className="nav-link" to="/Laundry" role="button">
-                      <div className="d-flex align-items-center">
-                        <span className="nav-link-icon">
-                          <span className="fas fa-flag" />
-                        </span>
-                        <span className="nav-link-text ps-1">Laundry</span>
-                      </div>
-                    </Link>
-                    {/* parent pages*/}
-                    <Link className="nav-link" to="/Food" role="button">
-                      <div className="d-flex align-items-center">
-                        <span className="nav-link-icon">
-                          <span className="fas fa-lemon" />
-                        </span>
-                        <span className="nav-link-text ps-1">Food</span>
-                      </div>
-                    </Link>
-                    {/* parent pages*/}
-                    <Link className="nav-link" to="/RoomType" role="button">
-                      <div className="d-flex align-items-center">
-                        <span className="nav-link-icon">
-                          <span className="fas fa-history" />
-                        </span>
-                        <span className="nav-link-text ps-1">Room Type</span>
-                      </div>
-                    </Link>
-                    {/* parent pages*/}
-                    <Link className="nav-link" to="/Role" role="button">
-                      <div className="d-flex align-items-center">
-                        <span className="nav-link-icon">
-                          <span className="fas fa-list" />
-                        </span>
-                        <span className="nav-link-text ps-1">Role</span>
-                      </div>
-                    </Link>
-                    {/* parent pages*/}
-                    <Link className="nav-link" to="/Feedback" role="button">
-                      <div className="d-flex align-items-center">
-                        <span className="nav-link-icon">
-                          <span className="fas fa-comments" />
-                        </span>
-                        <span className="nav-link-text ps-1">Feedback</span>
-                      </div>
-                    </Link>
-                    {/* parent pages*/}
-                    <Link className="nav-link" to="/Floor" role="button">
-                      <div className="d-flex align-items-center">
-                        <span className="nav-link-icon">
-                          <span className="fas fa-comments" />
-                        </span>
-                        <span className="nav-link-text ps-1">Floor</span>
-                      </div>
-                    </Link>
-                    {/* parent pages*/}
-                  </li>
-                </ul>
-              </li>
-            </ul>
+                  </div>
+                  {/* parent pages */}
+                  <Link
+                    className="nav-link"
+                    to="/Staff/Housekeeping"
+                    role="button"
+                  >
+                    <div className="d-flex align-items-center">
+                      <span className="nav-link-icon">
+                        <span className="fas fa-flag" />
+                      </span>
+                      <span className="nav-link-text ps-1">Rooms To Clean</span>
+                    </div>
+                  </Link>
+                </li>
+              </ul>
+            ) : isStaff ? (
+              <ul
+                className="navbar-nav flex-column mb-3"
+                id="navbarVerticalNav"
+              >
+                <li className="nav-item">
+                  {/* label */}
+                  <div className="row navbar-vertical-label-wrapper mt-3 mb-2">
+                    <div className="col-auto navbar-vertical-label">Pages</div>
+                    <div className="col ps-0">
+                      <hr className="mb-0 navbar-vertical-divider" />
+                    </div>
+                  </div>
+                  {/* staff-specific pages */}
+                  <Link className="nav-link" to="/Staff/" role="button">
+                    <div className="d-flex align-items-center">
+                      <span className="nav-link-icon">
+                        <span className="fas fa-user" />
+                      </span>
+                      <span className="nav-link-text ps-1">Book Room</span>
+                    </div>
+                  </Link>
+                  <Link className="nav-link" to="/Staff/Guests" role="button">
+                    <div className="d-flex align-items-center">
+                      <span className="nav-link-icon">
+                        <span className="fas fa-users" />
+                      </span>
+                      <span className="nav-link-text ps-1">Guests</span>
+                    </div>
+                  </Link>
+                  <Link className="nav-link" to="/Bookings" role="button">
+                    <div className="d-flex align-items-center">
+                      <span className="nav-link-icon">
+                        <span className="fas fa-user-circle" />
+                      </span>
+                      <span className="nav-link-text ps-1">Bookings</span>
+                    </div>
+                  </Link>
+                  <Link className="nav-link" to="/FoodOrder" role="button">
+                    <div className="d-flex align-items-center">
+                      <span className="nav-link-icon">
+                        <span className="fas fa-flag" />
+                      </span>
+                      <span className="nav-link-text ps-1">Order Food</span>
+                    </div>
+                  </Link>
+                </li>
+              </ul>
+            ) : (
+              <ul
+                className="navbar-nav flex-column mb-3"
+                id="navbarVerticalNav"
+              >
+                <li className="nav-item">
+                  {/* label */}
+                  <div className="row navbar-vertical-label-wrapper mt-3 mb-2">
+                    <div className="col-auto navbar-vertical-label">Pages</div>
+                    <div className="col ps-0">
+                      <hr className="mb-0 navbar-vertical-divider" />
+                    </div>
+                  </div>
+                  {/* default pages */}
+                  <Link className="nav-link" to="/Staff/" role="button">
+                    <div className="d-flex align-items-center">
+                      <span className="nav-link-icon">
+                        <span className="fas fa-user" />
+                      </span>
+                      <span className="nav-link-text ps-1">Book Room</span>
+                    </div>
+                  </Link>
+                  <Link className="nav-link" to="/Staff" role="button">
+                    <div className="d-flex align-items-center">
+                      <span className="nav-link-icon">
+                        <span className="fas fa-users" />
+                      </span>
+                      <span className="nav-link-text ps-1">Staff</span>
+                    </div>
+                  </Link>
+                </li>
+              </ul>
+            )}
           </div>
         </div>
       </nav>

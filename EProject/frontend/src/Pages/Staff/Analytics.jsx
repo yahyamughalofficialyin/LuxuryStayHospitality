@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import * as echarts from "echarts";
 
-const Home = () => {
+const Analytics = () => {
   const [totalPaidBill, setTotalPaidBill] = useState(0);
   const [totalUnpaidBill, setTotalUnpaidBill] = useState(0);
   const [monthlyData, setMonthlyData] = useState(Array(12).fill(0));
@@ -2918,4 +2918,4 @@ const Home = () => {
   );
 };
 
-export default Home;
+export default Analytics;
