@@ -95,7 +95,7 @@ function AppWithSidebarNavbar() {
             <Route path="/logout" element={<PrivateRoute element={<Logout />} />} />
 
             <Route
-              path="/login"
+              path="/Login"
               element={adminId ? <Navigate to="/" replace /> : <Login />}
             />
             <Route

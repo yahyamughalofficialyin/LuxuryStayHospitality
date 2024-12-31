@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 
@@ -91,7 +91,33 @@ const Invoice = () => {
       })
       .catch((err) => console.error("Error generating PDF:", err));
   };
+  const navigate = useNavigate();
+
+  // Fetch initial data
   useEffect(() => {
+    const staffId = sessionStorage.getItem("staffId");
+
+    if (staffId) {
+      // Fetch staff role
+      fetch(`http://localhost:5000/api/staff/${staffId}`)
+        .then((res) => res.json())
+        .then((staffData) => {
+          const staffRoleId = staffData.role;
+
+          // Fetch roles and match
+          fetch("http://localhost:5000/api/role/")
+            .then((res) => res.json())
+            .then((roles) => {
+              const role = roles.find((r) => r._id === staffRoleId);
+
+              if (role?.name === "housekeeping") {
+                navigate("/Staff/Housekeeping");
+              }
+            })
+            .catch((err) => console.error("Error fetching roles:", err));
+        })
+        .catch((err) => console.error("Error fetching staff data:", err));
+    }
     // Set current date in desired format
     const today = new Date();
     setCurrentDate(formatDate(today));
@@ -193,7 +219,7 @@ const Invoice = () => {
           </div>
         </div>
       </div>
-      <div className="card" id="invoice" >
+      <div className="card" id="invoice">
         <div className="card-body">
           <div className="row align-items-center text-center mb-3">
             <div className="col-sm-6 text-sm-start">

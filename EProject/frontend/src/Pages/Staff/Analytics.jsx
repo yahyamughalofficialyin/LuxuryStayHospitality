@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import * as echarts from "echarts";
+import { useNavigate } from "react-router-dom";
 
 const Analytics = () => {
   const [totalPaidBill, setTotalPaidBill] = useState(0);
@@ -8,8 +9,33 @@ const Analytics = () => {
   const [monthlyData, setMonthlyData] = useState(Array(12).fill(0));
   const [staffBookings, setStaffBookings] = useState([]);
   const [totalStaffCount, setTotalStaffCount] = useState(0);
+  const navigate = useNavigate();
 
+  // Fetch initial data
   useEffect(() => {
+    const staffId = sessionStorage.getItem("staffId");
+
+    if (staffId) {
+      // Fetch staff role
+      fetch(`http://localhost:5000/api/staff/${staffId}`)
+        .then((res) => res.json())
+        .then((staffData) => {
+          const staffRoleId = staffData.role;
+
+          // Fetch roles and match
+          fetch("http://localhost:5000/api/role/")
+            .then((res) => res.json())
+            .then((roles) => {
+              const role = roles.find((r) => r._id === staffRoleId);
+
+              if (role?.name === "housekeeping") {
+                navigate("/Staff/Housekeeping");
+              }
+            })
+            .catch((err) => console.error("Error fetching roles:", err));
+        })
+        .catch((err) => console.error("Error fetching staff data:", err));
+    }
     const fetchStaffBookings = async () => {
       try {
         // Fetch staff data

@@ -4,6 +4,7 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import moment from "moment";
 import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 const Bookings = () => {
   const [bookings, setBookings] = useState([]);
@@ -16,6 +17,7 @@ const Bookings = () => {
   const [viewModal, setViewModal] = useState(false); // State for modal visibility
   const [paymentModal, setPaymentModal] = useState(false); // State for payment modal visibility
   const [bookingToPay, setBookingToPay] = useState(null); // State for the booking to pay
+  const navigate = useNavigate();
 
   // Function to open the payment modal
   const handlePaymentModal = (booking) => {
@@ -58,7 +60,31 @@ const Bookings = () => {
     setBookingToPay(null);
   };
 
+  // Fetch initial data
   useEffect(() => {
+    const staffId = sessionStorage.getItem("staffId");
+
+    if (staffId) {
+      // Fetch staff role
+      fetch(`http://localhost:5000/api/staff/${staffId}`)
+        .then((res) => res.json())
+        .then((staffData) => {
+          const staffRoleId = staffData.role;
+
+          // Fetch roles and match
+          fetch("http://localhost:5000/api/role/")
+            .then((res) => res.json())
+            .then((roles) => {
+              const role = roles.find((r) => r._id === staffRoleId);
+
+              if (role?.name === "housekeeping") {
+                navigate("/Staff/Housekeeping");
+              }
+            })
+            .catch((err) => console.error("Error fetching roles:", err));
+        })
+        .catch((err) => console.error("Error fetching staff data:", err));
+    }
     const fetchData = async () => {
       try {
         const [bookingRes, roomRes, guestRes] = await Promise.all([
@@ -406,8 +432,8 @@ const Bookings = () => {
               </div>
               <div className="modal-body">
                 <p>
-                  Your bill is <strong>$ {bookingToPay.bill}</strong>. Do you want
-                  to pay now?
+                  Your bill is <strong>$ {bookingToPay.bill}</strong>. Do you
+                  want to pay now?
                 </p>
               </div>
               <div className="modal-footer">

@@ -3,6 +3,7 @@ import axios from "axios";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 const Guest = () => {
   const [guests, setGuests] = useState([]);
@@ -12,7 +13,7 @@ const Guest = () => {
     email: "",
     phone: "",
     documenttype: "",
-    documentno: "",
+    documentno: ""
   });
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isUpdate, setIsUpdate] = useState(false);
@@ -32,7 +33,33 @@ const Guest = () => {
     }
   };
 
+  const navigate = useNavigate();
+
+  // Fetch initial data
   useEffect(() => {
+    const staffId = sessionStorage.getItem("staffId");
+
+    if (staffId) {
+      // Fetch staff role
+      fetch(`http://localhost:5000/api/staff/${staffId}`)
+        .then((res) => res.json())
+        .then((staffData) => {
+          const staffRoleId = staffData.role;
+
+          // Fetch roles and match
+          fetch("http://localhost:5000/api/role/")
+            .then((res) => res.json())
+            .then((roles) => {
+              const role = roles.find((r) => r._id === staffRoleId);
+
+              if (role?.name === "housekeeping") {
+                navigate("/Staff/Housekeeping");
+              }
+            })
+            .catch((err) => console.error("Error fetching roles:", err));
+        })
+        .catch((err) => console.error("Error fetching staff data:", err));
+    }
     fetchGuests();
   }, []);
 
@@ -178,7 +205,7 @@ const Guest = () => {
         "http://localhost:5000/api/guest/create",
         guestData,
         {
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json" }
         }
       );
       // Success toast
@@ -189,7 +216,7 @@ const Guest = () => {
         email: "",
         phone: "",
         documenttype: "",
-        documentno: "",
+        documentno: ""
       });
       setIsModalOpen(false);
     } catch (error) {
@@ -287,7 +314,7 @@ const Guest = () => {
         `http://localhost:5000/api/guest/update/${_id}`,
         guestUpdateData,
         {
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json" }
         }
       );
 
@@ -299,7 +326,7 @@ const Guest = () => {
         email: "",
         phone: "",
         documenttype: "",
-        documentno: "",
+        documentno: ""
       });
       setIsModalOpen(false); // Close modal
     } catch (error) {
@@ -334,7 +361,7 @@ const Guest = () => {
       setIsUpdate(true);
       setGuestData({
         ...guest, // Spread the guest data
-        documenttype: guest.documenttype || "", // Ensure document type is set correctly
+        documenttype: guest.documenttype || "" // Ensure document type is set correctly
       });
     } else {
       setIsUpdate(false);
@@ -343,7 +370,7 @@ const Guest = () => {
         email: "",
         phone: "",
         documenttype: "",
-        documentno: "",
+        documentno: ""
       });
     }
     setIsModalOpen(true); // Show modal

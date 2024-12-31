@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import Select from "react-select";
+import { useNavigate } from "react-router-dom";
 
 const FoodOrder = () => {
   const [foods, setFoods] = useState([]);
@@ -14,9 +15,33 @@ const FoodOrder = () => {
   const [guestOptions, setGuestOptions] = useState([]); // Guest dropdown
   const [selectedGuest, setSelectedGuest] = useState(""); // Guest selection
   const [selectedFood, setSelectedFood] = useState(null); // Track selected food for the modal
+  const navigate = useNavigate();
 
   // Fetch initial data
   useEffect(() => {
+    const staffId = sessionStorage.getItem("staffId");
+
+    if (staffId) {
+      // Fetch staff role
+      fetch(`http://localhost:5000/api/staff/${staffId}`)
+        .then((res) => res.json())
+        .then((staffData) => {
+          const staffRoleId = staffData.role;
+
+          // Fetch roles and match
+          fetch("http://localhost:5000/api/role/")
+            .then((res) => res.json())
+            .then((roles) => {
+              const role = roles.find((r) => r._id === staffRoleId);
+
+              if (role?.name === "housekeeping") {
+                navigate("/Staff/Housekeeping");
+              }
+            })
+            .catch((err) => console.error("Error fetching roles:", err));
+        })
+        .catch((err) => console.error("Error fetching staff data:", err));
+    }
     // Fetch food data
     fetch("http://localhost:5000/api/food/")
       .then((res) => res.json())
@@ -127,7 +152,7 @@ const FoodOrder = () => {
                 <div className="position-relative rounded-top overflow-hidden">
                   <img
                     className="img-fluid rounded-top"
-                    src="assets/img/room/room.jpg"
+                    src="assets/img/food/food.jpg"
                     alt={food.name}
                   />
                   {food.quantity === 0 && (

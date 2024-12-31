@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { toast, ToastContainer } from 'react-toastify';
 import { useNavigate } from 'react-router-dom';
 import 'react-toastify/dist/ReactToastify.css';
@@ -8,6 +8,15 @@ const StaffLogin = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const adminId = sessionStorage.getItem('adminId');
+    if (adminId) {
+      // Show modal if admin is already logged in
+      const modal = new window.bootstrap.Modal(document.getElementById('alreadyLoggedInModal'));
+      modal.show();
+    }
+  }, []);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -26,6 +35,15 @@ const StaffLogin = () => {
         toast.error('An error occurred. Please try again.');
       }
     }
+  };
+
+  const handleLogout = () => {
+    sessionStorage.removeItem('adminId');
+    window.location.reload(); // Reload the page after logout
+  };
+
+  const handleCancel = () => {
+    navigate('/'); // Redirect to homepage if "Cancel" is clicked
   };
 
   return (
@@ -101,6 +119,25 @@ const StaffLogin = () => {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Modal for already logged-in admin */}
+      <div className="modal fade" id="alreadyLoggedInModal" tabIndex="-1" aria-labelledby="alreadyLoggedInModalLabel" aria-hidden="true">
+        <div className="modal-dialog">
+          <div className="modal-content">
+            <div className="modal-header">
+              <h5 className="modal-title" id="alreadyLoggedInModalLabel">You are Already Logged in as an Admin</h5>
+              <button type="button" className="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div className="modal-body">
+              Please log out first to login again as an admin.
+            </div>
+            <div className="modal-footer">
+              <button type="button" className="btn btn-secondary" onClick={handleCancel}>Cancel</button>
+              <button type="button" className="btn btn-primary" onClick={handleLogout}>Logout</button>
             </div>
           </div>
         </div>
